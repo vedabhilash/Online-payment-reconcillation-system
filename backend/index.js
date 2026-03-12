@@ -7,16 +7,7 @@ const path = require('path');
 const app = express();
 
 app.use(cors({ 
-    origin: (origin, callback) => {
-        // Allow local, specified production domain, and any vercel preview deployments
-        if (!origin || 
-            origin.startsWith('http://localhost') || 
-            origin.endsWith('.vercel.app')) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: true, // Allow all origins during setup/debug
     credentials: true 
 }));
 
