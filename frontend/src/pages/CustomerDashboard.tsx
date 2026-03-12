@@ -3,7 +3,7 @@ import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { safeDate } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { DollarSign, FileText, CheckCircle2, CopyMinus } from "lucide-react";
 
@@ -71,7 +71,7 @@ export default function CustomerDashboard() {
                                     <div key={inv._id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
                                         <div>
                                             <p className="font-medium text-sm">Invoice #{inv.invoiceNumber}</p>
-                                            <p className="text-xs text-muted-foreground">Due: {format(new Date(inv.dueDate), 'MMM dd, yyyy')}</p>
+                                            <p className="text-xs text-muted-foreground">Due: {safeDate(inv.dueDate)}</p>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <span className="font-medium">${inv.totalAmount.toFixed(2)}</span>

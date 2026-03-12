@@ -3,7 +3,7 @@ import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { safeDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { FileText } from "lucide-react";
@@ -95,7 +95,7 @@ export default function CustomerInvoices() {
                                         </Badge>
                                     </div>
                                     <p className="text-sm text-muted-foreground mt-2 font-medium">
-                                        Due on {format(new Date(inv.dueDate), 'MMMM dd, yyyy')}
+                                        Due on {safeDate(inv.dueDate, 'MMMM dd, yyyy')}
                                     </p>
                                 </div>
                                 <div className="text-3xl font-black tracking-tight text-primary">
@@ -106,7 +106,7 @@ export default function CustomerInvoices() {
                                 <div className="flex gap-8">
                                     <div className="flex flex-col">
                                         <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Issue Date</span>
-                                        <span className="text-sm font-semibold">{format(new Date(inv.createdAt || Date.now()), 'MMM dd, yyyy')}</span>
+                                        <span className="text-sm font-semibold">{safeDate(inv.createdAt || inv.issueDate || Date.now())}</span>
                                     </div>
                                 </div>
                                 {inv.status !== 'Paid' && (

@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { safeDate } from "@/lib/utils";
 import { FileText, Plus, Users, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
@@ -118,8 +118,8 @@ export default function Invoices() {
                                             <div className="font-bold text-base text-foreground group-hover:text-primary transition-colors">{inv.customerId?.name || 'Unknown'}</div>
                                             <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Customer ID: {inv.customerId?._id?.slice(-6) || 'N/A'}</div>
                                         </TableCell>
-                                        <TableCell className="px-8 py-6 font-semibold text-sm text-foreground/70">{format(new Date(inv.issueDate), 'MMM dd, yyyy')}</TableCell>
-                                        <TableCell className="px-8 py-6 font-semibold text-sm text-foreground/70">{format(new Date(inv.dueDate), 'MMM dd, yyyy')}</TableCell>
+                                        <TableCell className="px-8 py-6 font-semibold text-sm text-foreground/70">{safeDate(inv.issueDate)}</TableCell>
+                                        <TableCell className="px-8 py-6 font-semibold text-sm text-foreground/70">{safeDate(inv.dueDate)}</TableCell>
                                         <TableCell className="px-8 py-6">
                                             <Badge variant={getStatusVariant(inv.status) as any} className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-sm">
                                                 {inv.status}
