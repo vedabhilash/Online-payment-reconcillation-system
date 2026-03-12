@@ -6,7 +6,14 @@ const path = require('path');
 
 const app = express();
 
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:8080'], credentials: true }));
+app.use(cors({ 
+    origin: [
+        'http://localhost:5173', 
+        'http://localhost:8080', 
+        'https://online-payment-reconciliation-syste-tau.vercel.app'
+    ], 
+    credentials: true 
+}));
 
 // Webhooks MUST come before body-parser because Stripe requires raw body
 app.use('/api/webhooks', require('./routes/webhooks'));
