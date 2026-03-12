@@ -1,0 +1,16 @@
+TransactionDate,Amount,Currency,TransactionID,Merchant
+2026-02-01,1500.00,USD,TXN-7A1B2C,ACME Corp - Online Payment
+2026-02-03,2750.50,USD,TXN-8D3E4F,Beta Ltd - Card Payment
+2026-02-05,980.00,USD,TXN-9G5H6I,Gamma Inc - Wallet Transfer
+2026-02-07,3200.75,USD,TXN-0J7K8L,Delta LLC - Card Payment
+2026-02-10,450.00,USD,TXN-1M9N0O,Subscription Basic Plan
+2026-02-11,1200.00,USD,TXN-2P1Q2R,Epsilon Co - Online Payment
+2026-02-13,8750.00,USD,TXN-3S3T4U,Enterprise Plan Q1 Payment
+2026-02-15,320.25,USD,TXN-4V5W6X,Zeta Corp - Card Payment
+2026-02-17,670.00,USD,TXN-5Y7Z8A,Eta Ltd - Online Payment
+2026-02-19,2100.00,USD,TXN-6B9C0D,ClientX Monthly Retainer
+2026-02-21,550.50,USD,TXN-7E1F2G,Theta Inc - Wallet Transfer
+2026-02-23,4300.00,USD,TXN-8H3I4J,Phase 2 Milestone Payment
+2026-02-25,890.00,USD,TXN-9K5L6M,Iota LLC - Card Payment
+2026-02-26,1750.00,USD,TXN-0N7O8P,Kappa Co - Online Payment
+2026-02-28,3600.00,USD,TXN-1Q9R0S,Month-End Settlement

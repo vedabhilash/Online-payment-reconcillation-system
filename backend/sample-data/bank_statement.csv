@@ -1,0 +1,16 @@
+Date,Amount,Currency,Reference,Description
+2026-02-01,1500.00,USD,REF001,Payment from ACME Corp
+2026-02-03,2750.50,USD,REF002,Payment from Beta Ltd
+2026-02-05,980.00,USD,REF003,Payment from Gamma Inc
+2026-02-07,3200.75,USD,REF004,Payment from Delta LLC
+2026-02-10,450.00,USD,REF005,Subscription renewal - Basic
+2026-02-11,1200.00,USD,REF006,Payment from Epsilon Co
+2026-02-13,8750.00,USD,REF007,Enterprise contract - Q1
+2026-02-15,320.25,USD,REF008,Payment from Zeta Corp
+2026-02-17,670.00,USD,REF009,Payment from Eta Ltd
+2026-02-19,2100.00,USD,REF010,Monthly retainer - ClientX
+2026-02-21,550.50,USD,REF011,Payment from Theta Inc
+2026-02-23,4300.00,USD,REF012,Project milestone - Phase 2
+2026-02-25,890.00,USD,REF013,Payment from Iota LLC
+2026-02-26,1750.00,USD,REF014,Payment from Kappa Co
+2026-02-28,3600.00,USD,REF015,End of month settlement
