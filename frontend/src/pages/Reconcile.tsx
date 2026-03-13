@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { GitCompareArrows, CheckCircle2, XCircle, AlertTriangle, Loader2, Trash2 } from "lucide-react";
+import { GitCompareArrows, CheckCircle2, XCircle, AlertTriangle, Loader2, Trash2, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type Source = "bank_statement" | "invoice" | "payment_gateway" | "order";
@@ -151,13 +151,18 @@ export default function Reconcile() {
               </div>
             </div>
 
-            <div className="mt-6 flex gap-4">
-              <Button onClick={handleViewMatches} className="flex-1">
-                <CheckCircle2 className="mr-2 h-4 w-4" /> Review Matches & Discrepancies
+            <div className="mt-6 space-y-3">
+              <Button onClick={() => navigate(`/reports/${result.runId}`)} className="w-full bg-purple-600 hover:bg-purple-700">
+                <FileText className="mr-2 h-4 w-4" /> View Detailed Comparison Report
               </Button>
-              <Button onClick={handleViewUnmatched} variant="outline" className="flex-1 text-muted-foreground">
-                <XCircle className="mr-2 h-4 w-4" /> View Unmatched Transactions
-              </Button>
+              <div className="flex gap-4">
+                <Button onClick={handleViewMatches} variant="outline" className="flex-1">
+                  <CheckCircle2 className="mr-2 h-4 w-4" /> Quick Review
+                </Button>
+                <Button onClick={handleViewUnmatched} variant="outline" className="flex-1">
+                  <XCircle className="mr-2 h-4 w-4" /> View Unmatched
+                </Button>
+              </div>
             </div>
 
           </CardContent>

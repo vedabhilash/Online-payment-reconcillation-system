@@ -9,14 +9,18 @@ import { Download, BarChart3 } from "lucide-react";
 import { safeDate } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
+import { useNavigate } from "react-router-dom";
+
 interface Run {
   _id: string; sourceA: string; sourceB: string;
   matchedCount: number; unmatchedCount: number; discrepancyCount: number;
+  timingDifferenceCount?: number; adjustedCount?: number; exceptionCount?: number;
   totalCompared: number; status: string; createdAt: string;
 }
 
 export default function Reports() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [runs, setRuns] = useState<Run[]>([]);
 
   useEffect(() => {
@@ -105,7 +109,14 @@ export default function Reports() {
                   <TableCell className="text-sm text-blue-500">{r.timingDifferenceCount || 0}</TableCell>
                   <TableCell className="text-sm text-purple-500">{r.adjustedCount || 0}</TableCell>
                   <TableCell className="text-sm text-destructive">{r.exceptionCount || 0}</TableCell>
-                  <TableCell><Badge variant={r.status === "completed" ? "default" : "secondary"}>{r.status}</Badge></TableCell>
+                  <TableCell>
+                    <Badge variant={r.status === "completed" ? "default" : "secondary"}>{r.status}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/reports/${r._id}`)}>
+                      View Report
+                    </Button>
+                  </TableCell>
                 </TableRow>
               )) : (
                 <TableRow>

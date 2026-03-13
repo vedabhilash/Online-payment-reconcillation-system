@@ -3,8 +3,10 @@ const auth = require('../middleware/auth');
 const Transaction = require('../models/Transaction');
 const ReconciliationRun = require('../models/ReconciliationRun');
 const Match = require('../models/Match');
+const Discrepancy = require('../models/Discrepancy');
 const AuditLog = require('../models/AuditLog');
 const UploadBatch = require('../models/UploadBatch');
+const { reconcileTransactions } = require('../services/reconciliationEngine');
 
 // GET /api/reconciliation/runs
 router.get('/runs', auth, async (req, res) => {
@@ -61,53 +63,65 @@ router.post('/run', auth, async (req, res) => {
             status: 'running',
         });
 
-        // Matching algorithm
-        const matchedA = new Set();
-        const matchedB = new Set();
+        // Use the new Reconciliation Engine
+        const engineResult = reconcileTransactions(txA, txB, { dateTolerance, amountTolerance });
+        
         const matches = [];
-        const discrepancies = [];
+        const discrepanciesToSave = [];
+        const timingDifferences = [];
 
-        for (const a of txA) {
-            if (matchedA.has(a._id.toString())) continue;
-            for (const b of txB) {
-                if (matchedB.has(b._id.toString())) continue;
+        // Process perfect matches and timing differences
+        engineResult.matches.forEach(m => {
+            const matchData = {
+                userId: req.userId,
+                runId: run._id,
+                transactionAId: m.bankTransaction._id,
+                transactionBId: m.gatewayTransaction._id,
+                confidence: 100,
+                matchType: m.type === 'reference' ? 'reference' : 'auto',
+                status: 'pending'
+            };
+            matches.push(matchData);
+            if (m.type === 'timing_difference') timingDifferences.push(m);
+        });
 
-                const amountDiff = Math.abs(a.amount - b.amount);
-                const daysDiff = Math.abs((new Date(a.transactionDate) - new Date(b.transactionDate)) / (1000 * 60 * 60 * 24));
+        // Process discrepancies (amount mismatches)
+        engineResult.discrepancies.forEach(d => {
+            discrepanciesToSave.push({
+                userId: req.userId,
+                runId: run._id,
+                transactionAId: d.bankTransaction._id,
+                transactionBId: d.gatewayTransaction._id,
+                type: 'amount_mismatch',
+                difference: d.discrepancy.difference,
+                status: 'unresolved'
+            });
+        });
 
-                if (amountDiff <= amountTolerance && daysDiff <= dateTolerance) {
-                    const confidence = amountDiff === 0 && daysDiff === 0 ? 100 : Math.max(50, 100 - amountDiff - daysDiff * 5);
-                    matches.push({ userId: req.userId, runId: run._id, transactionAId: a._id, transactionBId: b._id, confidence, matchType: 'auto', status: 'pending' });
-                    matchedA.add(a._id.toString());
-                    matchedB.add(b._id.toString());
-                    break;
-                } else if (amountDiff <= amountTolerance * 3 && daysDiff <= dateTolerance * 2) {
-                    discrepancies.push({ userId: req.userId, runId: run._id, transactionAId: a._id, transactionBId: b._id, confidence: Math.max(20, 60 - amountDiff - daysDiff * 3), matchType: 'auto', status: 'pending' });
-                    matchedA.add(a._id.toString());
-                    matchedB.add(b._id.toString());
-                    break;
-                }
-            }
-        }
-
+        // Save matches to DB
         if (matches.length) {
             await Match.insertMany(matches);
             const ids = matches.flatMap(m => [m.transactionAId, m.transactionBId]);
             await Transaction.updateMany({ _id: { $in: ids } }, { status: 'matched' });
         }
 
-        if (discrepancies.length) {
-            await Match.insertMany(discrepancies);
-            const ids = discrepancies.flatMap(m => [m.transactionAId, m.transactionBId]);
+        // Save discrepancies to DB
+        if (discrepanciesToSave.length) {
+            await Discrepancy.insertMany(discrepanciesToSave);
+            const ids = discrepanciesToSave.flatMap(d => [d.transactionAId, d.transactionBId]);
             await Transaction.updateMany({ _id: { $in: ids } }, { status: 'discrepancy' });
         }
 
-        const unmatchedCount = Math.max(0, txA.length + txB.length - matches.length * 2 - discrepancies.length * 2);
+        const matchedCount = matches.length;
+        const discrepancyCount = discrepanciesToSave.length;
+        const timingDiffCount = timingDifferences.length;
+        const unmatchedCount = engineResult.unmatchedBank.length + engineResult.unmatchedGateway.length;
 
         await ReconciliationRun.findByIdAndUpdate(run._id, {
-            matchedCount: matches.length,
+            matchedCount,
             unmatchedCount,
-            discrepancyCount: discrepancies.length,
+            discrepancyCount,
+            timingDifferenceCount: timingDiffCount,
             status: 'completed',
             completedAt: new Date(),
         });
@@ -117,16 +131,15 @@ router.post('/run', auth, async (req, res) => {
             action: 'reconciliation_run',
             entityType: 'reconciliation_run',
             entityId: run._id,
-            details: { matched: matches.length, discrepancies: discrepancies.length, unmatched: unmatchedCount },
+            details: { matched: matchedCount, discrepancies: discrepancyCount, timingDiff: timingDiffCount, unmatched: unmatchedCount },
         });
 
         res.json({
             runId: run._id,
-            batchAId: lastBatchA ? lastBatchA._id : null,
-            batchBId: lastBatchB ? lastBatchB._id : null,
-            matched: matches.length,
+            matched: matchedCount,
             unmatched: unmatchedCount,
-            discrepancy: discrepancies.length,
+            discrepancy: discrepancyCount,
+            timingDifference: timingDiffCount,
             total: txA.length + txB.length,
         });
     } catch (err) {
@@ -172,6 +185,72 @@ router.post('/adjust', auth, async (req, res) => {
         });
 
         res.json(tx);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/reconciliation/manual-match
+router.post('/manual-match', auth, async (req, res) => {
+    try {
+        const { transactionAId, transactionBId, runId } = req.body;
+
+        const [txA, txB] = await Promise.all([
+            Transaction.findOne({ _id: transactionAId, userId: req.userId }),
+            Transaction.findOne({ _id: transactionBId, userId: req.userId })
+        ]);
+
+        if (!txA || !txB) return res.status(404).json({ error: 'One or both transactions not found' });
+
+        const match = await Match.create({
+            userId: req.userId,
+            runId,
+            transactionAId,
+            transactionBId,
+            confidence: 100,
+            matchType: 'manual',
+            status: 'approved'
+        });
+
+        await Transaction.updateMany({ _id: { $in: [transactionAId, transactionBId] } }, { status: 'matched' });
+
+        if (runId) {
+            await ReconciliationRun.findByIdAndUpdate(runId, {
+                $inc: { matchedCount: 1, unmatchedCount: -2 }
+            });
+        }
+
+        res.json(match);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/reconciliation/report/:runId
+router.get('/report/:runId', auth, async (req, res) => {
+    try {
+        const { runId } = req.params;
+        const [run, matches, discrepancies] = await Promise.all([
+            ReconciliationRun.findOne({ _id: runId, userId: req.userId }),
+            Match.find({ runId, userId: req.userId }).populate('transactionAId').populate('transactionBId'),
+            Discrepancy.find({ runId, userId: req.userId }).populate('transactionAId').populate('transactionBId')
+        ]);
+
+        if (!run) return res.status(404).json({ error: 'Run not found' });
+
+        // Get unmatched transactions related to this run's batches
+        const unmatched = await Transaction.find({
+            userId: req.userId,
+            status: 'unmatched',
+            uploadBatchId: { $in: [run.batchAId, run.batchBId].filter(Boolean) }
+        });
+
+        res.json({
+            run,
+            matches,
+            discrepancies,
+            unmatched
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

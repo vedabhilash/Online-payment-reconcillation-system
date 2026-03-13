@@ -134,6 +134,7 @@ router.get('/stats', auth, async (req, res) => {
             matched: all.filter((t) => t.status === 'matched').length,
             unmatched: all.filter((t) => t.status === 'unmatched').length,
             discrepancy: all.filter((t) => t.status === 'discrepancy').length,
+            timingDifference: all.filter((t) => t.status === 'timing_difference').length,
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

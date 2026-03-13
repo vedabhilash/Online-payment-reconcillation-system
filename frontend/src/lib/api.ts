@@ -94,6 +94,8 @@ export const api = {
         runId?: string;
     }) => request('/reconciliation/adjust', { method: 'POST', body: JSON.stringify(payload) }),
 
+    getSessionReport: (runId: string) => request(`/reconciliation/report/${runId}`),
+
     // Matches
     getMatches: (params?: { runId?: string }) => {
         const q = new URLSearchParams();
