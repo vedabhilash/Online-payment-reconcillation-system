@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const router = require('express').Router();
 const auth = require('../middleware/auth');
 const Transaction = require('../models/Transaction');
