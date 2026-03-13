@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { safeDate } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
@@ -97,7 +98,7 @@ export default function Transactions() {
             <TableBody>
               {filtered.length > 0 ? filtered.map((t) => (
                 <TableRow key={t._id}>
-                  <TableCell className="text-sm">{new Date(t.transactionDate).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-sm">{safeDate(t.transactionDate)}</TableCell>
                   <TableCell><Badge variant="outline" className="text-xs">{sourceLabels[t.source] || t.source}</Badge></TableCell>
                   <TableCell className="text-sm text-muted-foreground">{t.referenceId || "—"}</TableCell>
                   <TableCell className="max-w-[200px] truncate text-sm">{t.description || "—"}</TableCell>

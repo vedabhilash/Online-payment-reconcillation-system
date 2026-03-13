@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Download, BarChart3 } from "lucide-react";
+import { safeDate } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface Run {
@@ -23,17 +24,18 @@ export default function Reports() {
     api.getRuns().then(setRuns).catch(() => { });
   }, [user]);
 
-  const chartData = runs.slice(0, 10).reverse().map((r) => ({
-    name: new Date(r.createdAt).toLocaleDateString(),
-    Matched: r.matchedCount,
-    Unmatched: r.unmatchedCount,
-    Discrepancies: r.discrepancyCount,
+  const chartData = (runs || []).slice(0, 10).reverse().map((r) => ({
+    name: safeDate(r.createdAt, 'MMM dd'),
+    Matched: r.matchedCount || 0,
+    Unmatched: r.unmatchedCount || 0,
+    Discrepancies: r.discrepancyCount || 0,
   }));
 
   const exportCSV = () => {
+    if (!runs || !Array.isArray(runs)) return;
     const header = "Date,Source A,Source B,Matched,Unmatched,Discrepancies,Total,Status\n";
     const rows = runs.map((r) =>
-      `${new Date(r.createdAt).toLocaleDateString()},${r.sourceA},${r.sourceB},${r.matchedCount},${r.unmatchedCount},${r.discrepancyCount},${r.totalCompared},${r.status}`
+      `${safeDate(r.createdAt)},${r.sourceA},${r.sourceB},${r.matchedCount},${r.unmatchedCount},${r.discrepancyCount},${r.totalCompared},${r.status}`
     ).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -49,7 +51,7 @@ export default function Reports() {
           <h1 className="font-display text-2xl font-bold">Reports</h1>
           <p className="text-sm text-muted-foreground">Reconciliation analytics and exports</p>
         </div>
-        {runs.length > 0 && (
+        {runs && runs.length > 0 && (
           <Button variant="outline" onClick={exportCSV}><Download className="mr-2 h-4 w-4" /> Export CSV</Button>
         )}
       </div>
@@ -88,9 +90,9 @@ export default function Reports() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {runs.length > 0 ? runs.map((r) => (
+              {runs && runs.length > 0 ? runs.map((r) => (
                 <TableRow key={r._id}>
-                  <TableCell className="text-sm">{new Date(r.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-sm">{safeDate(r.createdAt)}</TableCell>
                   <TableCell className="text-sm">{r.sourceA.replace("_", " ")} ↔ {r.sourceB.replace("_", " ")}</TableCell>
                   <TableCell className="text-sm text-success">{r.matchedCount}</TableCell>
                   <TableCell className="text-sm">{r.unmatchedCount}</TableCell>

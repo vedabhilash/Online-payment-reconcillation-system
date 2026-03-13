@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { safeDate } from "@/lib/utils";
 import { Plus, Users, Search } from "lucide-react";
 
 export default function Customers() {
@@ -153,7 +153,7 @@ export default function Customers() {
                                             </Badge>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            <div className="text-sm font-bold text-foreground/70">{format(new Date(customer.createdAt), 'MMM dd, yyyy')}</div>
+                                            <div className="text-sm font-bold text-foreground/70">{safeDate(customer.createdAt)}</div>
                                         </td>
                                     </tr>
                                 ))}

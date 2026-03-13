@@ -28,7 +28,11 @@ interface Account {
 }
 
 const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+    try {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(amount) || 0);
+    } catch (e) {
+        return `$${(Number(amount) || 0).toFixed(2)}`;
+    }
 };
 
 export default function Accounts() {

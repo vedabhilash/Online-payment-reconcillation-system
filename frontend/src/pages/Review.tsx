@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { safeDate } from "@/lib/utils";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 interface MatchRow {
@@ -69,7 +70,7 @@ export default function Review() {
             <Card key={m.id}>
               <CardContent className="p-5">
                 <div className="mb-3 flex items-center gap-2">
-                  <Badge variant={m.confidence >= 80 ? "default" : "secondary"}>{m.confidence?.toFixed(0)}% confidence</Badge>
+                  <Badge variant={(Number(m.confidence) || 0) >= 80 ? "default" : "secondary"}>{(Number(m.confidence) || 0).toFixed(0)}% confidence</Badge>
                   <Badge variant="outline">{m.match_type}</Badge>
                 </div>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -77,9 +78,9 @@ export default function Review() {
                     <div key={i} className="rounded-lg border p-3">
                       <div className="mb-1 flex items-center justify-between">
                         <Badge variant="outline" className="text-xs">{tx.source.replace("_", " ")}</Badge>
-                        <span className="font-mono text-sm font-semibold">${tx.amount.toFixed(2)}</span>
+                        <span className="font-mono text-sm font-semibold">${(Number(tx.amount) || 0).toFixed(2)}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground">{new Date(tx.transaction_date).toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground">{safeDate(tx.transaction_date)}</p>
                       <p className="mt-1 text-sm truncate">{tx.description || tx.reference_id || "—"}</p>
                     </div>
                   ))}

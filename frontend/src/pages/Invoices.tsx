@@ -126,7 +126,7 @@ export default function Invoices() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="px-8 py-6 text-right">
-                                            <div className="font-black text-lg tracking-tight text-foreground">${inv.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                            <div className="font-black text-lg tracking-tight text-foreground">${(inv.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                                         </TableCell>
                                     </TableRow>
                                 )) : (

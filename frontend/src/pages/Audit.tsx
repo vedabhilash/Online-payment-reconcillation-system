@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { safeDate } from "@/lib/utils";
 import { Search } from "lucide-react";
 
 interface AuditLog {
@@ -53,7 +54,7 @@ export default function Audit() {
             <TableBody>
               {filtered.length > 0 ? filtered.map((l) => (
                 <TableRow key={l._id}>
-                  <TableCell className="text-sm whitespace-nowrap">{new Date(l.createdAt).toLocaleString()}</TableCell>
+                  <TableCell className="text-sm whitespace-nowrap">{safeDate(l.createdAt, "MMM dd, yyyy HH:mm")}</TableCell>
                   <TableCell><Badge variant="outline">{l.action.replace("_", " ")}</Badge></TableCell>
                   <TableCell className="text-sm">{l.entityType.replace("_", " ")}</TableCell>
                   <TableCell className="max-w-[300px] truncate text-xs text-muted-foreground">{JSON.stringify(l.details)}</TableCell>

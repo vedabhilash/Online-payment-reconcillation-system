@@ -25,7 +25,7 @@ export default function CustomerDashboard() {
     }
 
     const summaryCards = [
-        { label: "Outstanding Balance", value: `$${stats?.outstandingBalance?.toFixed(2) || '0.00'}`, icon: DollarSign, color: "text-primary" },
+        { label: "Outstanding Balance", value: `$${(Number(stats?.outstandingBalance) || 0).toFixed(2)}`, icon: DollarSign, color: "text-primary" },
         { label: "Total Invoices", value: stats?.totalInvoices || 0, icon: FileText, color: "text-muted-foreground" },
         { label: "Paid", value: stats?.paidInvoices || 0, icon: CheckCircle2, color: "text-success" },
         { label: "Pending", value: stats?.pendingInvoices || 0, icon: CopyMinus, color: "text-warning" },
@@ -74,7 +74,7 @@ export default function CustomerDashboard() {
                                             <p className="text-xs text-muted-foreground">Due: {safeDate(inv.dueDate)}</p>
                                         </div>
                                         <div className="flex items-center gap-4">
-                                            <span className="font-medium">${inv.totalAmount.toFixed(2)}</span>
+                                            <span className="font-medium">${(Number(inv.totalAmount) || 0).toFixed(2)}</span>
                                             <Badge variant={inv.status === 'Paid' ? 'secondary' : inv.status === 'Overdue' ? 'destructive' : 'outline'}>
                                                 {inv.status}
                                             </Badge>
@@ -89,7 +89,7 @@ export default function CustomerDashboard() {
                 <Card className="bg-primary/5 border-primary/20 flex flex-col items-center justify-center p-6 text-center shadow-none">
                     <DollarSign className="h-12 w-12 text-primary mb-4 opacity-80" />
                     <h3 className="text-xl font-bold mb-2">Ready to Pay?</h3>
-                    <p className="text-sm text-muted-foreground mb-6">You have an outstanding balance of ${stats?.outstandingBalance?.toFixed(2) || '0.00'}. Pay your invoices quickly and securely via our payment gateway.</p>
+                    <p className="text-sm text-muted-foreground mb-6">You have an outstanding balance of ${(Number(stats?.outstandingBalance) || 0).toFixed(2)}. Pay your invoices quickly and securely via our payment gateway.</p>
                     <Button className="w-full" onClick={() => navigate("/customer/invoices")}>
                         Make a Payment
                     </Button>

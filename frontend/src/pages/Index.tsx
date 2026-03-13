@@ -5,10 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import {
-  ArrowUpRight, Upload, GitCompareArrows, DollarSign, FileText, CheckCircle2, CopyMinus
-} from "lucide-react";
+import { ArrowUpRight, Upload, GitCompareArrows, DollarSign, FileText, CheckCircle2, CopyMinus } from "lucide-react";
+import { safeDate } from "@/lib/utils";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -42,13 +40,13 @@ export default function Dashboard() {
   }, [user]);
 
   const pieData = [
-    { name: "Matched", value: runStats.matched },
-    { name: "Unmatched", value: runStats.unmatched },
-    { name: "Discrepancy", value: runStats.discrepancy },
+    { name: "Matched", value: Number(runStats.matched) || 0 },
+    { name: "Unmatched", value: Number(runStats.unmatched) || 0 },
+    { name: "Discrepancy", value: Number(runStats.discrepancy) || 0 },
   ].filter((d) => d.value > 0);
 
   const summaryCards = [
-    { label: "Total Revenue", value: `$${finStats?.totalRevenue?.toFixed(2) || '0.00'}`, icon: DollarSign, color: "text-primary" },
+    { label: "Total Revenue", value: `$${(finStats?.totalRevenue || 0).toFixed(2)}`, icon: DollarSign, color: "text-primary" },
     { label: "Total Invoices", value: finStats?.totalInvoices || 0, icon: FileText, color: "text-muted-foreground" },
     { label: "Paid Invoices", value: finStats?.paidInvoices || 0, icon: CheckCircle2, color: "text-success" },
     { label: "Pending Invoices", value: finStats?.unpaidInvoices || 0, icon: CopyMinus, color: "text-warning" },
@@ -133,13 +131,13 @@ export default function Dashboard() {
                         <div className="flex gap-2 items-center mt-0.5 text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
                           <span>{tx.source}</span>
                           <span className="opacity-30">•</span>
-                          <span>{format(new Date(tx.date), 'MMM dd')}</span>
+                          <span>{safeDate(tx.date || tx.transactionDate, 'MMM dd')}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
-                      <span className="font-black text-base text-foreground tracking-tight">${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                      <Badge variant={tx.status === 'Matched' ? 'default' : 'secondary'} className="text-[9px] h-4.5 rounded-full px-2 font-black uppercase tracking-widest shadow-sm">
+                       <span className="font-black text-base text-foreground tracking-tight">${(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                      <Badge variant={tx.status === 'Matched' || tx.status === 'matched' ? 'default' : 'secondary'} className="text-[9px] h-4.5 rounded-full px-2 font-black uppercase tracking-widest shadow-sm">
                         {tx.status || 'Pending'}
                       </Badge>
                     </div>

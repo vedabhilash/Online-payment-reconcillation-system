@@ -99,7 +99,7 @@ export default function CustomerInvoices() {
                                     </p>
                                 </div>
                                 <div className="text-3xl font-black tracking-tight text-primary">
-                                    ${inv.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    ${(inv.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </div>
                             </CardHeader>
                             <CardContent className="p-8 pt-4 flex items-center justify-between border-t border-black/[0.03] dark:border-white/[0.03] bg-black/[0.01]">
