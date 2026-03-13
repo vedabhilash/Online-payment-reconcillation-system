@@ -8,8 +8,18 @@ const transactionSchema = new mongoose.Schema({
     amount: { type: Number, required: true },
     currency: { type: String, default: 'USD' },
     transactionDate: { type: Date, required: true },
-    status: { type: String, default: 'unmatched', enum: ['unmatched', 'matched', 'discrepancy'] },
+    status: { 
+        type: String, 
+        default: 'unmatched', 
+        enum: ['unmatched', 'matched', 'discrepancy', 'timing_difference', 'adjusted', 'exception'] 
+    },
+    classification: {
+        type: String,
+        default: 'none',
+        enum: ['none', 'missing_in_bank', 'missing_in_gateway', 'amount_mismatch', 'status_mismatch', 'duplicate']
+    },
     uploadBatchId: { type: mongoose.Schema.Types.ObjectId, ref: 'UploadBatch', default: null },
+    adjustmentNotes: { type: String, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Transaction', transactionSchema);

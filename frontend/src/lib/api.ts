@@ -61,6 +61,15 @@ export const api = {
         return request(`/transactions?${q}`);
     },
 
+    adjustTransaction: (id: string, payload: { 
+        status: string; 
+        classification: string; 
+        adjustmentNotes?: string 
+    }) => request(`/transactions/${id}/adjust`, { 
+        method: 'PATCH', 
+        body: JSON.stringify(payload) 
+    }),
+
     getStats: () => request('/transactions/stats'),
 
     // Dashboards
@@ -78,6 +87,7 @@ export const api = {
 
     // Reconciliation
     getRuns: () => request('/reconciliation/runs'),
+    getRunSummary: (id: string) => request(`/reconciliation/runs/${id}/summary`),
 
     runReconciliation: (payload: {
         sourceA: string;

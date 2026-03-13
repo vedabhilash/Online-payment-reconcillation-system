@@ -6,6 +6,44 @@ const Match = require('../models/Match');
 const AuditLog = require('../models/AuditLog');
 const UploadBatch = require('../models/UploadBatch');
 
+// GET /api/reconciliation/run/:id/summary
+router.get('/runs/:id/summary', auth, async (req, res) => {
+    try {
+        const run = await ReconciliationRun.findOne({ _id: req.params.id, userId: req.userId });
+        if (!run) return res.status(404).json({ error: 'Run not found' });
+
+        const batchIds = [run.batchAId, run.batchBId].filter(Boolean);
+        const transactions = await Transaction.find({ uploadBatchId: { $in: batchIds }, userId: req.userId });
+
+        // Aggregate by status
+        const statusBreakdown = {
+            matched: transactions.filter(t => t.status === 'matched').length,
+            timing_difference: transactions.filter(t => t.status === 'timing_difference').length,
+            adjusted: transactions.filter(t => t.status === 'adjusted').length,
+            exception: transactions.filter(t => t.status === 'exception').length,
+            unmatched: transactions.filter(t => t.status === 'unmatched').length,
+            discrepancy: transactions.filter(t => t.status === 'discrepancy').length,
+        };
+
+        // Aggregate by classification
+        const classificationBreakdown = {};
+        transactions.forEach(t => {
+            if (t.classification && t.classification !== 'none') {
+                classificationBreakdown[t.classification] = (classificationBreakdown[t.classification] || 0) + 1;
+            }
+        });
+
+        res.json({
+            run,
+            totalTransactions: transactions.length,
+            statusBreakdown,
+            classificationBreakdown
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // GET /api/reconciliation/runs
 router.get('/runs', auth, async (req, res) => {
     try {

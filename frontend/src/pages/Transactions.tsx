@@ -12,10 +12,14 @@ import { Search, Trash2, RotateCcw } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Info, Settings2 } from "lucide-react";
 
 interface Transaction {
   _id: string; source: string; referenceId: string | null; description: string | null;
   amount: number; currency: string; transactionDate: string; status: string;
+  classification?: string; adjustmentNotes?: string;
 }
 
 interface Run {
@@ -28,6 +32,16 @@ const sourceLabels: Record<string, string> = {
 };
 const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   matched: "default", unmatched: "secondary", discrepancy: "destructive",
+  timing_difference: "outline", adjusted: "secondary", exception: "destructive"
+};
+
+const classificationLabels: Record<string, string> = {
+  none: "None",
+  missing_in_bank: "Missing in Bank",
+  missing_in_gateway: "Missing in Gateway",
+  amount_mismatch: "Amount Mismatch",
+  status_mismatch: "Status Mismatch",
+  duplicate: "Duplicate Transaction"
 };
 
 export default function Transactions() {
@@ -39,6 +53,8 @@ export default function Transactions() {
   const [sourceFilter, setSourceFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
   const [runFilter, setRunFilter] = useState(searchParams.get("runId") || "all");
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [adjustData, setAdjustData] = useState({ status: "", classification: "", adjustmentNotes: "" });
 
   const handleStatusChange = (val: string) => {
     setStatusFilter(val);
@@ -95,6 +111,27 @@ export default function Transactions() {
     setStatusFilter("all");
     setRunFilter("all");
     setSearch("");
+  };
+
+  const handleOpenAdjust = (tx: Transaction) => {
+    setSelectedTx(tx);
+    setAdjustData({
+      status: tx.status,
+      classification: tx.classification || "none",
+      adjustmentNotes: tx.adjustmentNotes || ""
+    });
+  };
+
+  const handleSaveAdjustment = async () => {
+    if (!selectedTx) return;
+    try {
+      await api.adjustTransaction(selectedTx._id, adjustData);
+      toast({ title: "Adjustment saved", description: `Transaction ${selectedTx.referenceId || selectedTx._id} updated.` });
+      setSelectedTx(null);
+      fetchTransactions();
+    } catch (err: unknown) {
+      toast({ title: "Update failed", description: (err as Error).message, variant: "destructive" });
+    }
   };
 
   const filtered = transactions.filter(
@@ -169,6 +206,9 @@ export default function Transactions() {
                 <SelectItem value="matched">Matched</SelectItem>
                 <SelectItem value="unmatched">Unmatched</SelectItem>
                 <SelectItem value="discrepancy">Discrepancy</SelectItem>
+                <SelectItem value="timing_difference">Timing Difference</SelectItem>
+                <SelectItem value="adjusted">Adjusted</SelectItem>
+                <SelectItem value="exception">Exception</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -178,7 +218,8 @@ export default function Transactions() {
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead><TableHead>Source</TableHead><TableHead>Reference</TableHead>
-                <TableHead>Description</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Status</TableHead>
+                <TableHead>Description</TableHead><TableHead className="text-right">Amount</TableHead>
+                <TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -189,7 +230,19 @@ export default function Transactions() {
                   <TableCell className="text-sm text-muted-foreground">{t.referenceId || "—"}</TableCell>
                   <TableCell className="max-w-[200px] truncate text-sm">{t.description || "—"}</TableCell>
                   <TableCell className="text-right font-mono text-sm">{t.currency} {t.amount.toFixed(2)}</TableCell>
-                  <TableCell><Badge variant={statusVariant[t.status] || "secondary"}>{t.status}</Badge></TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <Badge variant={statusVariant[t.status] || "secondary"}>{t.status.replace('_', ' ')}</Badge>
+                      {t.classification && t.classification !== 'none' && (
+                        <span className="text-[10px] text-muted-foreground italic">{classificationLabels[t.classification]}</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => handleOpenAdjust(t)}>
+                      <Settings2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               )) : (
                 <TableRow>
@@ -202,6 +255,67 @@ export default function Transactions() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!selectedTx} onOpenChange={(open) => !open && setSelectedTx(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Investigate Transaction</DialogTitle>
+            <DialogDescription>Apply classification and adjustments for this unmatched record.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5 text-xs">
+                <p className="text-muted-foreground uppercase font-bold tracking-wider">Reference</p>
+                <p className="font-mono font-bold truncate">{selectedTx?.referenceId || "—"}</p>
+              </div>
+              <div className="space-y-1.5 text-xs text-right">
+                <p className="text-muted-foreground uppercase font-bold tracking-wider">Amount</p>
+                <p className="font-mono font-bold text-lg">{selectedTx?.currency} {selectedTx?.amount.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Reconciliation Status</Label>
+              <Select value={adjustData.status} onValueChange={(v) => setAdjustData(prev => ({ ...prev, status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unmatched">Unmatched</SelectItem>
+                  <SelectItem value="matched">Matched</SelectItem>
+                  <SelectItem value="timing_difference">Timing Difference (Settled Later)</SelectItem>
+                  <SelectItem value="adjusted">Adjusted (Fee/Refund)</SelectItem>
+                  <SelectItem value="exception">Exception (Needs Review)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Classification / Cause</Label>
+              <Select value={adjustData.classification} onValueChange={(v) => setAdjustData(prev => ({ ...prev, classification: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(classificationLabels).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Investigation Notes</Label>
+              <Textarea 
+                placeholder="e.g., Settle on Feb 11, Gateway fee deducted, etc." 
+                value={adjustData.adjustmentNotes}
+                onChange={(e) => setAdjustData(prev => ({ ...prev, adjustmentNotes: e.target.value }))}
+                className="h-24 resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedTx(null)}>Cancel</Button>
+            <Button onClick={handleSaveAdjustment}>Save Adjustment</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
