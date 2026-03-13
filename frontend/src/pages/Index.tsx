@@ -177,7 +177,7 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-primary text-primary-foreground border-0 shadow-lg shadow-primary/20 rounded-3xl overflow-hidden group cursor-pointer" onClick={() => navigate('/transactions?upload=true')}>
+        <Card className="bg-primary text-primary-foreground border-0 shadow-lg shadow-primary/20 rounded-3xl overflow-hidden group cursor-pointer" onClick={() => navigate('/upload')}>
           <CardContent className="p-8 flex flex-col justify-between h-full">
             <Upload className="h-10 w-10 mb-6 group-hover:scale-110 transition-transform" />
             <div>
