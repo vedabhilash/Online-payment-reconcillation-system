@@ -11,10 +11,7 @@ import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
 } from "recharts";
 
-interface RunStats { 
-  matched: number; unmatched: number; discrepancy: number; 
-  timing_difference: number; adjusted: number; exception: number;
-}
+interface RunStats { matched: number; unmatched: number; discrepancy: number; }
 interface DashboardStats {
   totalRevenue: number;
   totalInvoices: number;
@@ -23,22 +20,12 @@ interface DashboardStats {
   recentTransactions: any[];
 }
 
-const PIE_COLORS = [
-  "hsl(152,60%,45%)", // Matched (Green)
-  "hsl(220,10%,70%)", // Unmatched (Gray)
-  "hsl(38,92%,50%)",  // Discrepancy (Orange)
-  "hsl(210,100%,50%)", // Timing Difference (Blue)
-  "hsl(280,70%,60%)",  // Adjusted (Purple)
-  "hsl(350,80%,50%)"   // Exception (Red)
-];
+const PIE_COLORS = ["hsl(152,60%,40%)", "hsl(220,10%,70%)", "hsl(38,92%,50%)"];
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [runStats, setRunStats] = useState<RunStats>({ 
-    matched: 0, unmatched: 0, discrepancy: 0, 
-    timing_difference: 0, adjusted: 0, exception: 0 
-  });
+  const [runStats, setRunStats] = useState<RunStats>({ matched: 0, unmatched: 0, discrepancy: 0 });
   const [finStats, setFinStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
@@ -46,10 +33,7 @@ export default function Dashboard() {
     api.getStats().then((data) => setRunStats({
       matched: data.matched || 0,
       unmatched: data.unmatched || 0,
-      discrepancy: data.discrepancy || 0,
-      timing_difference: data.timing_difference || 0,
-      adjusted: data.adjusted || 0,
-      exception: data.exception || 0
+      discrepancy: data.discrepancy || 0
     })).catch(() => { });
 
     api.getAdminDashboardStats().then(setFinStats).catch(() => { });
@@ -59,9 +43,6 @@ export default function Dashboard() {
     { name: "Matched", value: Number(runStats.matched) || 0 },
     { name: "Unmatched", value: Number(runStats.unmatched) || 0 },
     { name: "Discrepancy", value: Number(runStats.discrepancy) || 0 },
-    { name: "Timing Diff", value: Number(runStats.timing_difference) || 0 },
-    { name: "Adjusted", value: Number(runStats.adjusted) || 0 },
-    { name: "Exception", value: Number(runStats.exception) || 0 },
   ].filter((d) => d.value > 0);
 
   const summaryCards = [
@@ -156,16 +137,8 @@ export default function Dashboard() {
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
                        <span className="font-black text-base text-foreground tracking-tight">${(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                      <Badge 
-                        variant={
-                          tx.status === 'matched' || tx.status === 'Matched' ? 'default' : 
-                          tx.status === 'discrepancy' ? 'destructive' : 
-                          tx.status === 'timing_difference' ? 'outline' : 
-                          'secondary'
-                        } 
-                        className="text-[9px] h-4.5 rounded-full px-2 font-black uppercase tracking-widest shadow-sm"
-                      >
-                        {(tx.status || 'Pending').replace('_', ' ')}
+                      <Badge variant={tx.status === 'Matched' || tx.status === 'matched' ? 'default' : 'secondary'} className="text-[9px] h-4.5 rounded-full px-2 font-black uppercase tracking-widest shadow-sm">
+                        {tx.status || 'Pending'}
                       </Badge>
                     </div>
                   </div>

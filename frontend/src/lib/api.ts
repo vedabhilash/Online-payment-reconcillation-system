@@ -61,15 +61,6 @@ export const api = {
         return request(`/transactions?${q}`);
     },
 
-    adjustTransaction: (id: string, payload: { 
-        status: string; 
-        classification: string; 
-        adjustmentNotes?: string 
-    }) => request(`/transactions/${id}/adjust`, { 
-        method: 'PATCH', 
-        body: JSON.stringify(payload) 
-    }),
-
     getStats: () => request('/transactions/stats'),
 
     // Dashboards
@@ -87,7 +78,6 @@ export const api = {
 
     // Reconciliation
     getRuns: () => request('/reconciliation/runs'),
-    getRunSummary: (id: string) => request(`/reconciliation/runs/${id}/summary`),
 
     runReconciliation: (payload: {
         sourceA: string;
@@ -95,6 +85,14 @@ export const api = {
         dateTolerance: number;
         amountTolerance: number;
     }) => request('/reconciliation/run', { method: 'POST', body: JSON.stringify(payload) }),
+
+    adjustTransaction: (payload: {
+        transactionId: string;
+        status: string;
+        category: string;
+        notes: string;
+        runId?: string;
+    }) => request('/reconciliation/adjust', { method: 'POST', body: JSON.stringify(payload) }),
 
     // Matches
     getMatches: (params?: { runId?: string }) => {

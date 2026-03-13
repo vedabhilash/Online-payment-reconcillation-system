@@ -134,9 +134,6 @@ router.get('/stats', auth, async (req, res) => {
             matched: all.filter((t) => t.status === 'matched').length,
             unmatched: all.filter((t) => t.status === 'unmatched').length,
             discrepancy: all.filter((t) => t.status === 'discrepancy').length,
-            timing_difference: all.filter((t) => t.status === 'timing_difference').length,
-            adjusted: all.filter((t) => t.status === 'adjusted').length,
-            exception: all.filter((t) => t.status === 'exception').length,
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -205,36 +202,6 @@ router.post('/upload', auth, async (req, res) => {
         });
 
         res.status(201).json({ batchId: batch._id, count: transactions.length });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// PATCH /api/transactions/:id/adjust - Manual investigation and adjustment
-router.patch('/:id/adjust', auth, async (req, res) => {
-    try {
-        const { status, classification, adjustmentNotes } = req.body;
-        const transaction = await Transaction.findOneAndUpdate(
-            { _id: req.params.id, userId: req.userId },
-            { 
-                status: status || 'unmatched', 
-                classification: classification || 'none', 
-                adjustmentNotes: adjustmentNotes || null 
-            },
-            { new: true }
-        );
-
-        if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
-
-        await AuditLog.create({
-            userId: req.userId,
-            action: 'transaction_adjustment',
-            entityType: 'transaction',
-            entityId: transaction._id,
-            details: { status, classification, adjustmentNotes },
-        });
-
-        res.json(transaction);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

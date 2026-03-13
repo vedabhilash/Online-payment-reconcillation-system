@@ -6,44 +6,6 @@ const Match = require('../models/Match');
 const AuditLog = require('../models/AuditLog');
 const UploadBatch = require('../models/UploadBatch');
 
-// GET /api/reconciliation/run/:id/summary
-router.get('/runs/:id/summary', auth, async (req, res) => {
-    try {
-        const run = await ReconciliationRun.findOne({ _id: req.params.id, userId: req.userId });
-        if (!run) return res.status(404).json({ error: 'Run not found' });
-
-        const batchIds = [run.batchAId, run.batchBId].filter(Boolean);
-        const transactions = await Transaction.find({ uploadBatchId: { $in: batchIds }, userId: req.userId });
-
-        // Aggregate by status
-        const statusBreakdown = {
-            matched: transactions.filter(t => t.status === 'matched').length,
-            timing_difference: transactions.filter(t => t.status === 'timing_difference').length,
-            adjusted: transactions.filter(t => t.status === 'adjusted').length,
-            exception: transactions.filter(t => t.status === 'exception').length,
-            unmatched: transactions.filter(t => t.status === 'unmatched').length,
-            discrepancy: transactions.filter(t => t.status === 'discrepancy').length,
-        };
-
-        // Aggregate by classification
-        const classificationBreakdown = {};
-        transactions.forEach(t => {
-            if (t.classification && t.classification !== 'none') {
-                classificationBreakdown[t.classification] = (classificationBreakdown[t.classification] || 0) + 1;
-            }
-        });
-
-        res.json({
-            run,
-            totalTransactions: transactions.length,
-            statusBreakdown,
-            classificationBreakdown
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
 // GET /api/reconciliation/runs
 router.get('/runs', auth, async (req, res) => {
     try {
@@ -167,6 +129,49 @@ router.post('/run', auth, async (req, res) => {
             discrepancy: discrepancies.length,
             total: txA.length + txB.length,
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/reconciliation/adjust (Manual Investigation & Actions)
+router.post('/adjust', auth, async (req, res) => {
+    try {
+        const { transactionId, status, category, notes, runId } = req.body;
+
+        const oldTx = await Transaction.findOne({ _id: transactionId, userId: req.userId });
+        if (!oldTx) return res.status(404).json({ error: 'Transaction not found' });
+
+        const tx = await Transaction.findOneAndUpdate(
+            { _id: transactionId, userId: req.userId },
+            { 
+                status, 
+                category, 
+                adjustmentNotes: notes,
+            },
+            { new: true }
+        );
+
+        // Update ReconciliationRun counts if runId is provided
+        if (runId) {
+            const update = { $inc: { unmatchedCount: -1 } };
+            if (status === 'timing_difference') update.$inc.timingDifferenceCount = 1;
+            else if (status === 'adjusted') update.$inc.adjustedCount = 1;
+            else if (status === 'exception') update.$inc.exceptionCount = 1;
+            else if (status === 'matched') update.$inc.matchedCount = 1; // if manually matched
+
+            await ReconciliationRun.findByIdAndUpdate(runId, update);
+        }
+
+        await AuditLog.create({
+            userId: req.userId,
+            action: 'manual_adjustment',
+            entityType: 'transaction',
+            entityId: tx._id,
+            details: { status, category, notes },
+        });
+
+        res.json(tx);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
