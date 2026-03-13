@@ -14,7 +14,15 @@ type Source = "bank_statement" | "invoice" | "payment_gateway" | "order";
 const sourceLabels: Record<Source, string> = {
   bank_statement: "Bank Statement", invoice: "Invoice", payment_gateway: "Payment Gateway", order: "Order Records",
 };
-interface RunResult { matched: number; unmatched: number; discrepancy: number; total: number; }
+interface RunResult { 
+  runId: string; 
+  batchAId?: string; 
+  batchBId?: string; 
+  matched: number; 
+  unmatched: number; 
+  discrepancy: number; 
+  total: number; 
+}
 
 export default function Reconcile() {
   const { user } = useAuth();
@@ -40,7 +48,7 @@ export default function Reconcile() {
     setResult(null);
     try {
       const res = await api.runReconciliation({ sourceA, sourceB, dateTolerance, amountTolerance });
-      setResult(res);
+      setResult(res as RunResult);
       toast({ title: "Reconciliation complete", description: `${res.matched} matches found.` });
     } catch (err: unknown) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
@@ -58,6 +66,17 @@ export default function Reconcile() {
     } catch (err: unknown) {
       toast({ title: "Clear failed", description: (err as Error).message, variant: "destructive" });
     }
+  };
+
+  const handleViewMatches = () => {
+    if (!result) return;
+    navigate(`/review?runId=${result.runId}`);
+  };
+
+  const handleViewUnmatched = () => {
+    if (!result) return;
+    const ids = [result.batchAId, result.batchBId].filter(Boolean).join(",");
+    navigate(`/transactions?status=unmatched&batchId=${ids}`);
   };
 
   return (
@@ -133,10 +152,10 @@ export default function Reconcile() {
             </div>
 
             <div className="mt-6 flex gap-4">
-              <Button onClick={() => navigate("/review")} className="flex-1">
+              <Button onClick={handleViewMatches} className="flex-1">
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Review Matches & Discrepancies
               </Button>
-              <Button onClick={() => navigate("/transactions?status=unmatched")} variant="outline" className="flex-1 text-muted-foreground">
+              <Button onClick={handleViewUnmatched} variant="outline" className="flex-1 text-muted-foreground">
                 <XCircle className="mr-2 h-4 w-4" /> View Unmatched Transactions
               </Button>
             </div>

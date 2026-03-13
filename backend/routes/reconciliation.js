@@ -119,6 +119,9 @@ router.post('/run', auth, async (req, res) => {
         });
 
         res.json({
+            runId: run._id,
+            batchAId: lastBatchA ? lastBatchA._id : null,
+            batchBId: lastBatchB ? lastBatchB._id : null,
             matched: matches.length,
             unmatched: unmatchedCount,
             discrepancy: discrepancies.length,

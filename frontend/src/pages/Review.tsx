@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { safeDate } from "@/lib/utils";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 interface MatchRow {
   id: string; confidence: number; match_type: string; status: string; notes: string | null;
@@ -17,18 +18,22 @@ interface MatchRow {
 
 export default function Review() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const runId = searchParams.get("runId");
+  
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [noteInput, setNoteInput] = useState<Record<string, string>>({});
 
   const fetchMatches = async () => {
     if (!user) return;
     try {
-      const data = await api.getMatches();
+      const data = await api.getMatches({ runId: runId || undefined });
       setMatches(data);
     } catch { /* ignore */ }
   };
 
-  useEffect(() => { fetchMatches(); }, [user]);
+  useEffect(() => { fetchMatches(); }, [user, runId]);
 
   const handleAction = async (matchId: string, action: "approved" | "rejected") => {
     try {
@@ -57,11 +62,18 @@ export default function Review() {
           <h1 className="font-display text-2xl font-bold">Review Matches</h1>
           <p className="text-sm text-muted-foreground">Approve, reject, or annotate matched transactions</p>
         </div>
-        {matches.length > 0 && (
-          <Button onClick={bulkApprove}>
-            <CheckCircle2 className="mr-2 h-4 w-4" /> Approve All ({matches.length})
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {runId && (
+            <Button variant="outline" onClick={() => navigate("/review")}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> View All
+            </Button>
+          )}
+          {matches.length > 0 && (
+            <Button onClick={bulkApprove}>
+              <CheckCircle2 className="mr-2 h-4 w-4" /> Approve All ({matches.length})
+            </Button>
+          )}
+        </div>
       </div>
 
       {matches.length > 0 ? (

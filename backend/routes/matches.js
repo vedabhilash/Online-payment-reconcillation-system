@@ -7,7 +7,11 @@ const AuditLog = require('../models/AuditLog');
 // GET /api/matches - pending matches with populated transactions
 router.get('/', auth, async (req, res) => {
     try {
-        const matches = await Match.find({ userId: req.userId, status: 'pending' })
+        const { runId } = req.query;
+        const query = { userId: req.userId, status: 'pending' };
+        if (runId) query.runId = runId;
+
+        const matches = await Match.find(query)
             .populate('transactionAId', 'source amount transactionDate description referenceId')
             .populate('transactionBId', 'source amount transactionDate description referenceId')
             .sort({ confidence: -1 });

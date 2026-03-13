@@ -39,16 +39,19 @@ export default function Transactions() {
     setSearchParams(searchParams);
   };
 
+  const batchId = searchParams.get("batchId");
+
   const fetchTransactions = () => {
     if (!user) return;
-    api.getTransactions({ source: sourceFilter, status: statusFilter })
+    const batchIdArr = batchId ? batchId.split(',') : undefined;
+    api.getTransactions({ source: sourceFilter, status: statusFilter, batchId: batchIdArr })
       .then(setTransactions)
       .catch(() => { });
   };
 
   useEffect(() => {
     fetchTransactions();
-  }, [user, sourceFilter, statusFilter]);
+  }, [user, sourceFilter, statusFilter, batchId]);
 
   const handlePurge = async () => {
     if (!window.confirm("This will permanently delete ALL imported transactions and reconciliation history. Continue?")) return;
@@ -59,6 +62,13 @@ export default function Transactions() {
     } catch (err: unknown) {
       toast({ title: "Clear failed", description: (err as Error).message, variant: "destructive" });
     }
+  };
+
+  const clearFilters = () => {
+    setSearchParams({});
+    setSourceFilter("all");
+    setStatusFilter("all");
+    setSearch("");
   };
 
   const filtered = transactions.filter(
@@ -76,9 +86,16 @@ export default function Transactions() {
           <h1 className="font-display text-2xl font-bold">Transactions</h1>
           <p className="text-sm text-muted-foreground">View and filter all imported transactions</p>
         </div>
-        <Button variant="outline" size="sm" onClick={handlePurge} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-          <Trash2 className="mr-2 h-4 w-4" /> Reset All Data
-        </Button>
+        <div className="flex items-center gap-2">
+          {batchId && (
+            <Button variant="outline" size="sm" onClick={clearFilters}>
+              <RotateCcw className="mr-2 h-4 w-4" /> Clear Filter
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={handlePurge} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+            <Trash2 className="mr-2 h-4 w-4" /> Reset All Data
+          </Button>
+        </div>
       </div>
 
       <Card>

@@ -46,10 +46,17 @@ export const api = {
         return data;
     },
 
-    getTransactions: (params?: { source?: string; status?: string }) => {
+    getTransactions: (params?: { source?: string; status?: string; batchId?: string | string[] }) => {
         const q = new URLSearchParams();
         if (params?.source) q.set('source', params.source);
         if (params?.status) q.set('status', params.status);
+        if (params?.batchId) {
+            if (Array.isArray(params.batchId)) {
+                params.batchId.forEach(id => q.append('batchId', id));
+            } else {
+                q.set('batchId', params.batchId);
+            }
+        }
         return request(`/transactions?${q}`);
     },
 
@@ -79,7 +86,11 @@ export const api = {
     }) => request('/reconciliation/run', { method: 'POST', body: JSON.stringify(payload) }),
 
     // Matches
-    getMatches: () => request('/matches'),
+    getMatches: (params?: { runId?: string }) => {
+        const q = new URLSearchParams();
+        if (params?.runId) q.set('runId', params.runId);
+        return request(`/matches?${q}`);
+    },
 
     updateMatch: (id: string, action: 'approved' | 'rejected', notes?: string) =>
         request(`/matches/${id}`, { method: 'PATCH', body: JSON.stringify({ action, notes }) }),

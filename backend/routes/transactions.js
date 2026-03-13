@@ -84,10 +84,21 @@ function parsePDFText(text) {
 // GET /api/transactions
 router.get('/', auth, async (req, res) => {
     try {
-        const { source, status } = req.query;
+        const { source, status, batchId } = req.query;
         const filter = { userId: req.userId };
         if (source && source !== 'all') filter.source = source;
         if (status && status !== 'all') filter.status = status;
+        
+        if (batchId) {
+            if (Array.isArray(batchId)) {
+                filter.uploadBatchId = { $in: batchId };
+            } else if (batchId.includes(',')) {
+                filter.uploadBatchId = { $in: batchId.split(',') };
+            } else {
+                filter.uploadBatchId = batchId;
+            }
+        }
+
         const transactions = await Transaction.find(filter).sort({ transactionDate: -1 });
         res.json(transactions);
     } catch (err) {
