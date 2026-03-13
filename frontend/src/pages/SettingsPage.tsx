@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Save } from "lucide-react";
 
@@ -77,7 +78,22 @@ export default function SettingsPage() {
           </div>
           <div className="space-y-2">
             <Label>Default Currency</Label>
-            <Input value={currency} onChange={(e) => setCurrency(e.target.value)} maxLength={3} />
+            <Select value={currency} onValueChange={setCurrency}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD">USD (US Dollar)</SelectItem>
+                <SelectItem value="EUR">EUR (Euro)</SelectItem>
+                <SelectItem value="GBP">GBP (British Pound)</SelectItem>
+                <SelectItem value="INR">INR (Indian Rupee)</SelectItem>
+                <SelectItem value="JPY">JPY (Japanese Yen)</SelectItem>
+                <SelectItem value="CAD">CAD (Canadian Dollar)</SelectItem>
+                <SelectItem value="AUD">AUD (Australian Dollar)</SelectItem>
+                <SelectItem value="SGD">SGD (Singapore Dollar)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Standard currency for newly created invoices and reports</p>
           </div>
         </CardContent>
       </Card>
