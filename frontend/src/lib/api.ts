@@ -136,6 +136,8 @@ export const api = {
 
     // Invoices
     getInvoices: () => request('/invoices'),
+    getInvoiceByNumber: (num: string) => request(`/invoices/by-number/${num}`),
+    sendInvoiceReminder: (id: string) => request(`/invoices/${id}/remind`, { method: 'POST' }),
     getCustomerInvoices: () => request('/invoices/customer'),
     createInvoice: (payload: any) => request('/invoices', { method: 'POST', body: JSON.stringify(payload) }),
 
