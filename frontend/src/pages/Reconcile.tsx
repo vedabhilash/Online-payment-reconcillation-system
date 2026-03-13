@@ -40,6 +40,22 @@ export default function Reconcile() {
       if (s.dateTolerance !== undefined) setDateTolerance(s.dateTolerance);
       if (s.amountTolerance !== undefined) setAmountTolerance(s.amountTolerance);
     }).catch(() => { });
+
+    // Fetch latest run to persist state when navigating back
+    api.getReconciliationRuns().then((runs) => {
+      if (runs && runs.length > 0) {
+        const last = runs[0];
+        setResult({
+          runId: last._id,
+          matched: last.matchedCount,
+          unmatched: last.unmatchedCount,
+          discrepancy: last.discrepancyCount,
+          total: last.totalCompared,
+          batchAId: last.batchAId,
+          batchBId: last.batchBId
+        });
+      }
+    }).catch(() => {});
   }, [user]);
 
   const runReconciliation = async () => {
