@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { safeDate } from "@/lib/utils";
-import { Search, Trash2, RotateCcw, Bell } from "lucide-react";
+import { Search, Trash2, RotateCcw } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -55,8 +55,6 @@ export default function Transactions() {
   const [runFilter, setRunFilter] = useState(searchParams.get("runId") || "all");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [adjustData, setAdjustData] = useState({ status: "", classification: "", adjustmentNotes: "" });
-  const [linkedInvoice, setLinkedInvoice] = useState<any>(null);
-  const [isReminding, setIsReminding] = useState(false);
 
   const handleStatusChange = (val: string) => {
     setStatusFilter(val);
@@ -115,35 +113,13 @@ export default function Transactions() {
     setSearch("");
   };
 
-  const handleOpenAdjust = async (tx: Transaction) => {
+  const handleOpenAdjust = (tx: Transaction) => {
     setSelectedTx(tx);
-    setLinkedInvoice(null);
     setAdjustData({
       status: tx.status,
       classification: tx.classification || "none",
       adjustmentNotes: tx.adjustmentNotes || ""
     });
-
-    // Attempt to link invoice if referenceId exists
-    if (tx.referenceId) {
-      try {
-        const inv = await api.getInvoiceByNumber(tx.referenceId);
-        if (inv) setLinkedInvoice(inv);
-      } catch (e) {}
-    }
-  };
-
-  const handleSendReminder = async () => {
-    if (!linkedInvoice) return;
-    setIsReminding(true);
-    try {
-      await api.sendInvoiceReminder(linkedInvoice._id);
-      toast({ title: "Reminder sent", description: `Notification triggered for ${linkedInvoice.customerId?.name || 'customer'}.` });
-    } catch (err: any) {
-      toast({ title: "Reminder failed", description: err.message, variant: "destructive" });
-    } finally {
-      setIsReminding(false);
-    }
   };
 
   const handleSaveAdjustment = async () => {
@@ -280,12 +256,7 @@ export default function Transactions() {
         </CardContent>
       </Card>
 
-      <Dialog open={!!selectedTx} onOpenChange={(open) => {
-        if (!open) {
-          setSelectedTx(null);
-          setLinkedInvoice(null);
-        }
-      }}>
+      <Dialog open={!!selectedTx} onOpenChange={(open) => !open && setSelectedTx(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Investigate Transaction</DialogTitle>
@@ -302,39 +273,6 @@ export default function Transactions() {
                 <p className="font-mono font-bold text-lg">{selectedTx?.currency} {selectedTx?.amount.toFixed(2)}</p>
               </div>
             </div>
-
-            {linkedInvoice && (
-              <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-3 relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-[10px] font-black uppercase text-primary tracking-widest">Linked Invoice Found</span>
-                  </div>
-                  <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest border-primary/30 text-primary">
-                    {linkedInvoice.invoiceNumber}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Customer</p>
-                    <p className="text-sm font-black">{linkedInvoice.customerId?.name || 'Unknown'}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Invoice Total</p>
-                    <p className="text-sm font-black">${linkedInvoice.totalAmount.toFixed(2)}</p>
-                  </div>
-                </div>
-                <Button 
-                  size="sm" 
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-xl font-bold shadow-md shadow-primary/20 transition-all duration-200" 
-                  onClick={handleSendReminder}
-                  disabled={isReminding}
-                >
-                  <Bell className="h-3.5 w-3.5 mr-2" />
-                  {isReminding ? "Sending..." : "Send Payment Reminder"}
-                </Button>
-              </div>
-            )}
 
             <div className="space-y-2">
               <Label>Reconciliation Status</Label>

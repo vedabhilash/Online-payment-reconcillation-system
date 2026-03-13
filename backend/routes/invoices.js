@@ -94,45 +94,4 @@ router.post('/', requireAdmin, async (req, res) => {
     }
 });
 
-// GET /api/invoices/by-number/:invoiceNumber
-router.get('/by-number/:invoiceNumber', requireAdmin, async (req, res) => {
-    try {
-        const invoice = await Invoice.findOne({ 
-            invoiceNumber: req.params.invoiceNumber, 
-            userId: req.userId 
-        }).populate('customerId', 'name email');
-        
-        if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
-        res.json(invoice);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// POST /api/invoices/:id/remind
-router.post('/:id/remind', requireAdmin, async (req, res) => {
-    try {
-        const invoice = await Invoice.findOne({ _id: req.params.id, userId: req.userId }).populate('customerId');
-        if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
-
-        // Simulate sending email/reminder
-        const AuditLog = require('../models/AuditLog');
-        await AuditLog.create({
-            userId: req.userId,
-            action: 'invoice_reminder_sent',
-            entityType: 'invoice',
-            entityId: invoice._id,
-            details: { 
-                invoiceNumber: invoice.invoiceNumber, 
-                customerEmail: invoice.customerId?.email,
-                amount: invoice.totalAmount
-            }
-        });
-
-        res.json({ message: `Reminder sent to ${invoice.customerId?.name || 'customer'} for Invoice #${invoice.invoiceNumber}` });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
 module.exports = router;
