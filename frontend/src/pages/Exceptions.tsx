@@ -146,14 +146,14 @@ export default function ExceptionsPage() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="rounded-full h-8 px-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className={`rounded-full h-8 px-3 transition-opacity ${e.status === "resolved" || e.status === "ignored" ? "" : "opacity-0 group-hover:opacity-100"}`}
                         onClick={() => {
                           setSelectedException(e);
                           setUpdateStatus(e.status);
                           setUpdateNotes(e.notes || "");
                         }}
                       >
-                        Investigate
+                        {e.status === "resolved" || e.status === "ignored" ? "View Details" : "Investigate"}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -176,7 +176,9 @@ export default function ExceptionsPage() {
       <Dialog open={!!selectedException} onOpenChange={(open) => !open && setSelectedException(null)}>
         <DialogContent className="max-w-md rounded-3xl">
           <DialogHeader>
-            <DialogTitle>Investigate Exception</DialogTitle>
+            <DialogTitle>
+              {selectedException?.status === "resolved" || selectedException?.status === "ignored" ? "Finalized Exception Record" : "Investigate Exception"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4 rounded-2xl bg-muted/30 p-4 border border-border/50">
@@ -192,7 +194,11 @@ export default function ExceptionsPage() {
 
             <div className="space-y-2">
               <Label>Resolution Status</Label>
-              <Select value={updateStatus} onValueChange={setUpdateStatus}>
+              <Select 
+                value={updateStatus} 
+                onValueChange={setUpdateStatus}
+                disabled={selectedException?.status === "resolved" || selectedException?.status === "ignored"}
+              >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="open">Open</SelectItem>
@@ -210,12 +216,17 @@ export default function ExceptionsPage() {
                 className="rounded-2xl min-h-[100px]"
                 value={updateNotes}
                 onChange={(e) => setUpdateNotes(e.target.value)}
+                readOnly={selectedException?.status === "resolved" || selectedException?.status === "ignored"}
               />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setSelectedException(null)} className="rounded-full">Cancel</Button>
-            <Button onClick={handleUpdate} className="rounded-full">Save Changes</Button>
+            <Button variant="outline" onClick={() => setSelectedException(null)} className="rounded-full">
+              {selectedException?.status === "resolved" || selectedException?.status === "ignored" ? "Close" : "Cancel"}
+            </Button>
+            {(selectedException?.status !== "resolved" && selectedException?.status !== "ignored") && (
+              <Button onClick={handleUpdate} className="rounded-full">Save Changes</Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
