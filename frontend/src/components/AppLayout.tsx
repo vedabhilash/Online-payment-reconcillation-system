@@ -19,7 +19,7 @@ export default function AppLayout() {
   if (!user) return <Navigate to="/auth" replace />;
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-[#f0f2f1]">
+    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-background">
       {/* Mobile Header */}
       <header className="flex lg:hidden items-center justify-between px-6 py-4 border-b bg-sidebar text-sidebar-foreground sticky top-0 z-30">
         <Link to="/" className="flex items-center gap-2">
@@ -32,8 +32,8 @@ export default function AppLayout() {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-80 bg-sidebar border-r-sidebar-border">
-            <SidebarContent isMobile={true} />
+          <SheetContent side="left" className="p-0 w-72 bg-sidebar border-r-sidebar-border">
+            <SidebarContent />
           </SheetContent>
         </Sheet>
       </header>

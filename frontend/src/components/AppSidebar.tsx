@@ -1,7 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import {
   LayoutDashboard,
   Upload,
@@ -14,170 +13,69 @@ import {
   Settings,
   LogOut,
   Shield,
+  BookOpen,
   FileText,
-  Users,
-  Database,
-  Briefcase,
-  Zap
+  Users
 } from "lucide-react";
 
-type NavGroup = 'OVERVIEW' | 'DATABASE' | 'ENGINE' | 'ACCOUNTS';
+const adminNavItems = [
+  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/upload", label: "Upload Data", icon: Upload },
+  { to: "/transactions", label: "Transactions", icon: List },
+  { to: "/reconcile", label: "Reconcile", icon: GitCompareArrows },
+  { to: "/review", label: "Review", icon: CheckCircle2 },
+  { to: "/exceptions", label: "Exception Log", icon: AlertCircle },
+  { to: "/reports", label: "Reports", icon: BarChart3 },
+  { to: "/customers", label: "Customers", icon: Users },
+  { to: "/invoices", label: "Invoices", icon: FileText },
+  { to: "/audit", label: "Audit Trail", icon: ClipboardList },
+  { to: "/settings", label: "Settings", icon: Settings },
+];
 
-export function SidebarContent({ isMobile }: { isMobile?: boolean }) {
+const customerNavItems = [
+  { to: "/customer/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/customer/invoices", label: "My Invoices", icon: FileText },
+  { to: "/settings", label: "Settings", icon: Settings },
+];
+
+export function SidebarContent() {
   const { user, signOut } = useAuth();
-  const [activeGroup, setActiveGroup] = useState<NavGroup>('OVERVIEW');
-
-  const groups = [
-    { id: 'OVERVIEW', icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'DATABASE', icon: Database, label: 'Data Explorer' },
-    { id: 'ENGINE', icon: Zap, label: 'Recon Engine' },
-    { id: 'ACCOUNTS', icon: Briefcase, label: 'Finances' },
-  ] as const;
-
-  const adminNavMapping: Record<NavGroup, any[]> = {
-    OVERVIEW: [
-      { to: "/", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/audit", label: "Audit Trail", icon: ClipboardList },
-      { to: "/settings", label: "Settings", icon: Settings },
-    ],
-    DATABASE: [
-      { to: "/upload", label: "Upload Data", icon: Upload },
-      { to: "/transactions", label: "Transactions", icon: List },
-    ],
-    ENGINE: [
-      { to: "/reconcile", label: "Reconcile", icon: GitCompareArrows },
-      { to: "/review", label: "Review", icon: CheckCircle2 },
-      { to: "/exceptions", label: "Exception Log", icon: AlertCircle },
-      { to: "/reports", label: "Reports", icon: BarChart3 },
-    ],
-    ACCOUNTS: [
-      { to: "/customers", label: "Customers", icon: Users },
-      { to: "/invoices", label: "Invoices", icon: FileText },
-    ]
-  };
-
-  if (isMobile) {
-    return (
-      <div className="flex h-full flex-col bg-[#001e2b] text-white">
-        <div className="p-6 flex items-center gap-3">
-          <Shield className="h-8 w-8 text-[#00ed64]" />
-          <span className="text-xl font-bold tracking-tight">ReconPay</span>
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 pb-10">
-          {groups.map((g) => (
-            <div key={g.id} className="mt-8">
-              <p className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">{g.label}</p>
-              <div className="space-y-1">
-                {adminNavMapping[g.id].map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.to === "/"}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-white/10"
-                    activeClassName="bg-[#00ed64]/20 text-[#00ed64]"
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </NavLink>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="p-6 border-t border-white/10">
-          <Button variant="ghost" className="w-full justify-start gap-3 hover:bg-white/5 text-white" onClick={signOut}>
-            <LogOut className="h-5 w-5" />
-            Sign Out
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const navItems = adminNavMapping[activeGroup];
+  const navItems = user?.role === 'CUSTOMER' ? customerNavItems : adminNavItems;
 
   return (
-    <div className="flex h-full bg-white overflow-hidden shadow-2xl rounded-r-[2rem]">
-      {/* Column 1: Slim Icon Bar (Atlas Style) */}
-      <div className="w-[64px] bg-[#001e2b] flex flex-col items-center py-6 gap-6 z-20">
-        <div className="mb-4">
-          <Shield className="h-8 w-8 text-[#00ed64]" />
+    <div className="flex h-full flex-col bg-sidebar/95 backdrop-blur-xl text-sidebar-foreground">
+      <div className="flex items-center gap-3 px-8 py-8">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/20">
+          <Shield className="h-6 w-6 text-primary-foreground" />
         </div>
-        
-        {groups.map((g) => (
-          <button
-            key={g.id}
-            onClick={() => setActiveGroup(g.id)}
-            className={`p-2.5 rounded-xl transition-all duration-200 group relative ${
-              activeGroup === g.id ? "bg-[#00ed64]/10 text-[#00ed64]" : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <g.icon className="h-5.5 w-5.5" />
-            {activeGroup === g.id && (
-               <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#00ed64] rounded-r-full" />
-            )}
-            {/* Tooltip on hover */}
-            <div className="absolute left-16 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase tracking-widest z-50">
-              {g.label}
-            </div>
-          </button>
-        ))}
-
-        <div className="mt-auto flex flex-col gap-4 pb-4">
-          <button 
-            onClick={signOut}
-            className="p-3 text-slate-400 hover:text-red-400 transition-colors"
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
-        </div>
+        <span className="font-sans text-xl font-bold tracking-tight text-white">ReconPay</span>
       </div>
 
-      {/* Column 2: Wide Navigation Bar */}
-      <div className="flex-1 bg-[#f9fbfa] flex flex-col border-r border-slate-200">
-        <div className="px-6 py-5">
-           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">
-             Organization
-           </p>
-           <div className="flex items-center gap-2 mb-6">
-             <div className="h-8 w-8 rounded bg-slate-200 flex items-center justify-center font-bold text-slate-600 text-xs shadow-inner">
-               {user?.email?.[0].toUpperCase()}
-             </div>
-             <div className="truncate">
-               <p className="text-sm font-bold text-[#001e2b] truncate">{user?.email?.split('@')[0]}</p>
-               <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider italic">Primary Cluster</p>
-             </div>
-           </div>
+      <nav className="flex-1 space-y-1.5 px-4 py-4 overflow-y-auto">
+        {navItems.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === "/"}
+            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 hover:bg-white/10 hover:translate-x-1"
+            activeClassName="bg-white/10 text-white shadow-sm"
+          >
+            <Icon className="h-4.5 w-4.5" />
+            {label}
+          </NavLink>
+        ))}
+      </nav>
 
-           <h2 className="text-lg font-black text-[#001e2b] mb-2">
-             {groups.find(g => g.id === activeGroup)?.label}
-           </h2>
-        </div>
-
-        <nav className="flex-1 px-3 space-y-1">
-          {navItems.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === "/"}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 text-slate-600 hover:bg-slate-200/50 hover:text-[#00684a]"
-              activeClassName="bg-[#00684a]/10 text-[#00684a] shadow-sm relative overflow-hidden"
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="p-6 bg-white/50 border-t border-slate-200 mt-auto">
-           <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-             <span>System Status</span>
-             <div className="flex items-center gap-1.5">
-               <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-               <span className="text-success">Active</span>
-             </div>
-           </div>
-        </div>
+      <div className="border-t border-white/10 px-4 py-6 bg-black/20">
+        <div className="mb-4 px-4 text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider truncate">{user?.email}</div>
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-4 rounded-xl px-4 py-3 text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+          onClick={signOut}
+        >
+          <LogOut className="h-5 w-5" />
+          <span className="font-semibold">Sign Out</span>
+        </Button>
       </div>
     </div>
   );
@@ -185,7 +83,7 @@ export function SidebarContent({ isMobile }: { isMobile?: boolean }) {
 
 export default function AppSidebar() {
   return (
-    <aside className="hidden lg:flex h-screen w-[320px] flex-col z-20 sticky top-0">
+    <aside className="hidden lg:flex h-screen w-72 flex-col border-r border-sidebar-border shadow-2xl z-20 sticky top-0">
       <SidebarContent />
     </aside>
   );
