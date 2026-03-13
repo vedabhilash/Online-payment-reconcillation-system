@@ -108,6 +108,12 @@ export default function CustomerInvoices() {
                                         <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Issue Date</span>
                                         <span className="text-sm font-semibold">{safeDate(inv.createdAt || inv.issueDate || Date.now())}</span>
                                     </div>
+                                    {inv.userId && (
+                                        <div className="flex flex-col border-l pl-8 border-black/5 dark:border-white/5">
+                                            <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Issued By</span>
+                                            <span className="text-sm font-semibold">{inv.userId.displayName || inv.userId.email}</span>
+                                        </div>
+                                    )}
                                 </div>
                                 {inv.status !== 'Paid' && (
                                     <Button 

@@ -45,7 +45,9 @@ router.get('/customer-dashboard', requireCustomer, async (req, res) => {
         });
 
         const customerIds = customerProfiles.map(p => p._id);
-        const invoices = await Invoice.find({ customerId: { $in: customerIds } }).sort({ issueDate: -1 });
+        const invoices = await Invoice.find({ customerId: { $in: customerIds } })
+            .populate('userId', 'displayName email')
+            .sort({ issueDate: -1 });
 
         let outstandingBalance = invoices
             .filter(i => i.status !== 'Paid' && i.status !== 'Cancelled')

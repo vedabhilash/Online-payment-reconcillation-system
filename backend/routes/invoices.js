@@ -13,7 +13,10 @@ router.get('/customer', requireCustomer, async (req, res) => {
         if (!customerProfiles.length) return res.json([]);
 
         const customerIds = customerProfiles.map(p => p._id);
-        const invoices = await Invoice.find({ customerId: { $in: customerIds } }).populate('customerId', 'name').sort({ issueDate: -1 });
+        const invoices = await Invoice.find({ customerId: { $in: customerIds } })
+            .populate('customerId', 'name')
+            .populate('userId', 'displayName email')
+            .sort({ issueDate: -1 });
         res.json(invoices);
     } catch (err) {
         res.status(500).json({ error: err.message });

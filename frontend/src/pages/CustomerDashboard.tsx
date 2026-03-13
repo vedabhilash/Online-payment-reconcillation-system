@@ -71,7 +71,14 @@ export default function CustomerDashboard() {
                                     <div key={inv._id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
                                         <div>
                                             <p className="font-medium text-sm">Invoice #{inv.invoiceNumber}</p>
-                                            <p className="text-xs text-muted-foreground">Due: {safeDate(inv.dueDate)}</p>
+                                            <div className="flex gap-2">
+                                                <p className="text-xs text-muted-foreground">Due: {safeDate(inv.dueDate)}</p>
+                                                {inv.userId && (
+                                                    <p className="text-xs text-muted-foreground border-l pl-2 border-black/5 dark:border-white/5 truncate max-w-[120px]">
+                                                        By: {inv.userId.displayName || inv.userId.email}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <span className="font-medium">${(Number(inv.totalAmount) || 0).toFixed(2)}</span>
