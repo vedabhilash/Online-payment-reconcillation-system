@@ -23,7 +23,7 @@ import {
 
 type NavGroup = 'OVERVIEW' | 'DATABASE' | 'ENGINE' | 'ACCOUNTS';
 
-export function SidebarContent() {
+export function SidebarContent({ isMobile }: { isMobile?: boolean }) {
   const { user, signOut } = useAuth();
   const [activeGroup, setActiveGroup] = useState<NavGroup>('OVERVIEW');
 
@@ -56,10 +56,48 @@ export function SidebarContent() {
     ]
   };
 
+  if (isMobile) {
+    return (
+      <div className="flex h-full flex-col bg-[#001e2b] text-white">
+        <div className="p-6 flex items-center gap-3">
+          <Shield className="h-8 w-8 text-[#00ed64]" />
+          <span className="text-xl font-bold tracking-tight">ReconPay</span>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 pb-10">
+          {groups.map((g) => (
+            <div key={g.id} className="mt-8">
+              <p className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">{g.label}</p>
+              <div className="space-y-1">
+                {adminNavMapping[g.id].map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === "/"}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-white/10"
+                    activeClassName="bg-[#00ed64]/20 text-[#00ed64]"
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="p-6 border-t border-white/10">
+          <Button variant="ghost" className="w-full justify-start gap-3 hover:bg-white/5 text-white" onClick={signOut}>
+            <LogOut className="h-5 w-5" />
+            Sign Out
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const navItems = adminNavMapping[activeGroup];
 
   return (
-    <div className="flex h-full bg-white overflow-hidden shadow-2xl">
+    <div className="flex h-full bg-white overflow-hidden shadow-2xl rounded-r-[2rem]">
       {/* Column 1: Slim Icon Bar (Atlas Style) */}
       <div className="w-[64px] bg-[#001e2b] flex flex-col items-center py-6 gap-6 z-20">
         <div className="mb-4">
