@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { safeDate } from "@/lib/utils";
 import { Search, Trash2, RotateCcw } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
@@ -19,6 +20,7 @@ interface Transaction {
 
 interface Run {
   _id: string; sourceA: string; sourceB: string; createdAt: string;
+  matchedCount: number; unmatchedCount: number;
 }
 
 const sourceLabels: Record<string, string> = {
@@ -124,8 +126,8 @@ export default function Transactions() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative flex-1 min-w-[240px]">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Search by description, reference, or amount…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
@@ -139,17 +141,27 @@ export default function Transactions() {
                 <SelectItem value="order">Order</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={runFilter} onValueChange={handleRunChange}>
-              <SelectTrigger className="w-52"><SelectValue placeholder="Reconciliation Run" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Runs</SelectItem>
-                {runs.map((r) => (
-                  <SelectItem key={r._id} value={r._id}>
-                    {safeDate(r.createdAt)} ({r.sourceA.split('_')[0]} vs {r.sourceB.split('_')[0]})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Label className="hidden lg:block text-xs uppercase text-muted-foreground font-semibold">Select Run:</Label>
+              <Select value={runFilter} onValueChange={handleRunChange}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="All History" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Full Transaction History (All)</SelectItem>
+                  {runs.map((r) => (
+                    <SelectItem key={r._id} value={r._id}>
+                      <div className="flex flex-col py-0.5">
+                        <span className="font-medium">{safeDate(r.createdAt)}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {r.sourceA.split('_')[0]} + {r.sourceB.split('_')[0]} • {r.matchedCount} matched, {r.unmatchedCount} left
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Select value={statusFilter} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-36"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
