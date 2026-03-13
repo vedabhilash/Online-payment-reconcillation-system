@@ -125,36 +125,46 @@ export default function Transactions() {
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="relative flex-1 min-w-[240px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search by description, reference, or amount…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        <CardHeader className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+          <div className="flex flex-1 items-center gap-4 w-full md:max-w-md">
+            <div className="relative w-full">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search description or reference..."
+                className="pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
-            <Select value={sourceFilter} onValueChange={setSourceFilter}>
-              <SelectTrigger className="w-40"><SelectValue placeholder="Source" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sources</SelectItem>
-                <SelectItem value="bank_statement">Bank Statement</SelectItem>
-                <SelectItem value="invoice">Invoice</SelectItem>
-                <SelectItem value="payment_gateway">Payment Gateway</SelectItem>
-                <SelectItem value="order">Order</SelectItem>
-              </SelectContent>
-            </Select>
+            <Button variant="ghost" size="icon" onClick={clearFilters} className="shrink-0"><RotateCcw className="h-4 w-4" /></Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <Label className="hidden lg:block text-xs uppercase text-muted-foreground font-semibold">Select Run:</Label>
+              <Label className="hidden xl:block text-xs uppercase text-muted-foreground font-semibold">Source:</Label>
+              <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                <SelectTrigger className="w-[120px]"><SelectValue placeholder="Source" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  <SelectItem value="bank_statement">Bank</SelectItem>
+                  <SelectItem value="payment_gateway">Gateway</SelectItem>
+                  <SelectItem value="order">Order</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="hidden xl:block text-xs uppercase text-muted-foreground font-semibold">Run:</Label>
               <Select value={runFilter} onValueChange={handleRunChange}>
-                <SelectTrigger className="w-64">
+                <SelectTrigger className="w-[180px] sm:w-[240px]">
                   <SelectValue placeholder="All History" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Full Transaction History (All)</SelectItem>
+                  <SelectItem value="all">Full History</SelectItem>
                   {runs.map((r) => (
                     <SelectItem key={r._id} value={r._id}>
                       <div className="flex flex-col py-0.5">
                         <span className="font-medium">{safeDate(r.createdAt)}</span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {r.sourceA.split('_')[0]} + {r.sourceB.split('_')[0]} • {r.matchedCount} matched, {r.unmatchedCount} left
+                        <span className="text-[10px] text-muted-foreground truncate">
+                          {r.sourceA.split('_')[0]} + {r.sourceB.split('_')[0]}
                         </span>
                       </div>
                     </SelectItem>
@@ -162,30 +172,38 @@ export default function Transactions() {
                 </SelectContent>
               </Select>
             </div>
-            <Select value={statusFilter} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-36"><SelectValue placeholder="Status" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="matched">Matched</SelectItem>
-                <SelectItem value="unmatched">Unmatched</SelectItem>
-                <SelectItem value="discrepancy">Discrepancy</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Label className="hidden xl:block text-xs uppercase text-muted-foreground font-semibold">Status:</Label>
+              <Select value={statusFilter} onValueChange={handleStatusChange}>
+                <SelectTrigger className="w-[120px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="matched">Matched</SelectItem>
+                  <SelectItem value="unmatched">Unmatched</SelectItem>
+                  <SelectItem value="discrepancy">Discrepancy</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead><TableHead>Source</TableHead><TableHead>Reference</TableHead>
-                <TableHead>Description</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
+        <CardContent className="p-0 sm:p-6">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="whitespace-nowrap">Date</TableHead>
+                  <TableHead className="hidden sm:table-cell">Source</TableHead>
+                  <TableHead>Reference</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
             <TableBody>
               {filtered.length > 0 ? filtered.map((t) => (
                 <TableRow key={t._id}>
                   <TableCell className="text-sm">{safeDate(t.transactionDate)}</TableCell>
-                  <TableCell><Badge variant="outline" className="text-xs">{sourceLabels[t.source] || t.source}</Badge></TableCell>
+                  <TableCell className="hidden sm:table-cell"><Badge variant="outline" className="text-xs">{sourceLabels[t.source] || t.source}</Badge></TableCell>
                   <TableCell className="text-sm text-muted-foreground">{t.referenceId || "—"}</TableCell>
                   <TableCell className="max-w-[200px] truncate text-sm">{t.description || "—"}</TableCell>
                   <TableCell className="text-right font-mono text-sm">{t.currency} {t.amount.toFixed(2)}</TableCell>
@@ -200,7 +218,8 @@ export default function Transactions() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
+        </div>
+      </CardContent>
       </Card>
     </div>
   );

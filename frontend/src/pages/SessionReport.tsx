@@ -26,17 +26,19 @@ export default function SessionReport() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4" /></Button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0"><ArrowLeft className="h-4 w-4" /></Button>
           <div>
-            <h1 className="text-2xl font-bold">Session Detail Report</h1>
-            <p className="text-sm text-muted-foreground">{run.sourceA.split('_')[0]} ↔ {run.sourceB.split('_')[0]} • {safeDate(run.createdAt)}</p>
+            <h1 className="text-xl sm:text-2xl font-bold">Session Detail Report</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-none">
+              {run.sourceA.split('_')[0]} ↔ {run.sourceB.split('_')[0]} • {safeDate(run.createdAt)}
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-success/5 border-success/20">
           <CardContent className="p-4">
             <p className="text-[10px] font-bold uppercase tracking-widest text-success/60">Auto Matched</p>
@@ -65,8 +67,9 @@ export default function SessionReport() {
 
       <Card>
         <CardHeader><CardTitle className="text-lg">Comparison Table</CardTitle></CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="p-0 sm:p-6">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Bank Transaction</TableHead>
@@ -139,6 +142,7 @@ export default function SessionReport() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

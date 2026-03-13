@@ -273,7 +273,7 @@ export default function UploadPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="max-h-80 overflow-auto rounded-lg border">
+            <div className="max-h-80 overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
                   <TableRow>

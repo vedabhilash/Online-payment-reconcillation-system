@@ -36,11 +36,12 @@ const customerNavItems = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-export default function AppSidebar() {
+export function SidebarContent() {
   const { user, signOut } = useAuth();
+  const navItems = user?.role === 'CUSTOMER' ? customerNavItems : adminNavItems;
 
   return (
-    <aside className="flex h-screen w-72 flex-col bg-sidebar/95 backdrop-blur-xl text-sidebar-foreground border-r border-sidebar-border shadow-2xl z-20">
+    <div className="flex h-full flex-col bg-sidebar/95 backdrop-blur-xl text-sidebar-foreground">
       <div className="flex items-center gap-3 px-8 py-8">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/20">
           <Shield className="h-6 w-6 text-primary-foreground" />
@@ -49,7 +50,7 @@ export default function AppSidebar() {
       </div>
 
       <nav className="flex-1 space-y-1.5 px-4 py-4 overflow-y-auto">
-        {(user?.role === 'CUSTOMER' ? customerNavItems : adminNavItems).map(({ to, label, icon: Icon }) => (
+        {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -64,16 +65,24 @@ export default function AppSidebar() {
       </nav>
 
       <div className="border-t border-white/10 px-4 py-6 bg-black/20">
-        <div className="mb-4 px-4 text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider">{user?.email}</div>
+        <div className="mb-4 px-4 text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider truncate">{user?.email}</div>
         <Button
           variant="ghost"
-          className="w-full justify-start gap-4 rounded-xl px-4 py-6 text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+          className="w-full justify-start gap-4 rounded-xl px-4 py-3 text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
           onClick={signOut}
         >
           <LogOut className="h-5 w-5" />
           <span className="font-semibold">Sign Out</span>
         </Button>
       </div>
+    </div>
+  );
+}
+
+export default function AppSidebar() {
+  return (
+    <aside className="hidden lg:flex h-screen w-72 flex-col border-r border-sidebar-border shadow-2xl z-20 sticky top-0">
+      <SidebarContent />
     </aside>
   );
 }

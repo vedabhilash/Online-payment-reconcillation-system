@@ -50,13 +50,13 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold">Reports</h1>
           <p className="text-sm text-muted-foreground">Reconciliation analytics and exports</p>
         </div>
         {runs && runs.length > 0 && (
-          <Button variant="outline" onClick={exportCSV}><Download className="mr-2 h-4 w-4" /> Export CSV</Button>
+          <Button variant="outline" onClick={exportCSV} className="w-full sm:w-auto"><Download className="mr-2 h-4 w-4" /> Export CSV</Button>
         )}
       </div>
 
@@ -85,8 +85,9 @@ export default function Reports() {
 
       <Card>
         <CardHeader><CardTitle className="text-base">All Reconciliation Runs</CardTitle></CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="p-0 sm:p-6">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
@@ -125,6 +126,7 @@ export default function Reports() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

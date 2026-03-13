@@ -87,13 +87,13 @@ export default function Dashboard() {
 
       {/* Reconciliation Engine Metrics */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h2 className="text-2xl font-bold tracking-tight">Reconciliation Overview</h2>
-          <Button onClick={() => navigate('/reconcile')} size="sm" className="rounded-full">
+          <Button onClick={() => navigate('/reconcile')} size="sm" className="rounded-full w-full sm:w-auto">
             <GitCompareArrows className="mr-2 h-4 w-4" /> Run Engine
           </Button>
         </div>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
           {reconMetrics.map(({ label, value, icon: Icon, color }) => (
             <Card key={label} className="border-0 bg-muted/30 shadow-none rounded-2xl">
               <CardContent className="p-4 text-center">
