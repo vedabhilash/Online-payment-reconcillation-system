@@ -4,6 +4,7 @@ const Transaction = require('../models/Transaction');
 const ReconciliationRun = require('../models/ReconciliationRun');
 const Match = require('../models/Match');
 const AuditLog = require('../models/AuditLog');
+const UploadBatch = require('../models/UploadBatch');
 
 // GET /api/reconciliation/runs
 router.get('/runs', auth, async (req, res) => {
@@ -26,9 +27,22 @@ router.post('/run', auth, async (req, res) => {
             return res.status(400).json({ error: 'Source A and B must be different' });
         }
 
+        // Scope reconciliation to the most recent upload batch for each source
+        // This ensures results reflect the "current" work rather than every unmatched record in history
+        const [lastBatchA, lastBatchB] = await Promise.all([
+            UploadBatch.findOne({ userId: req.userId, source: sourceA }).sort({ createdAt: -1 }),
+            UploadBatch.findOne({ userId: req.userId, source: sourceB }).sort({ createdAt: -1 })
+        ]);
+
+        const queryA = { userId: req.userId, source: sourceA, status: 'unmatched' };
+        if (lastBatchA) queryA.uploadBatchId = lastBatchA._id;
+
+        const queryB = { userId: req.userId, source: sourceB, status: 'unmatched' };
+        if (lastBatchB) queryB.uploadBatchId = lastBatchB._id;
+
         const [txA, txB] = await Promise.all([
-            Transaction.find({ userId: req.userId, source: sourceA, status: 'unmatched' }),
-            Transaction.find({ userId: req.userId, source: sourceB, status: 'unmatched' }),
+            Transaction.find(queryA),
+            Transaction.find(queryB),
         ]);
 
         if (!txA.length || !txB.length) {
