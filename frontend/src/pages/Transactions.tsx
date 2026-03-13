@@ -71,7 +71,7 @@ export default function Transactions() {
 
   useEffect(() => {
     if (!user) return;
-    api.getRuns().then(setRuns).catch(() => {});
+    api.getReconciliationRuns().then(setRuns).catch(() => {});
   }, [user]);
 
   useEffect(() => {
