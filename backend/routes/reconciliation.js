@@ -282,11 +282,8 @@ router.post('/adjust', auth, async (req, res) => {
                 exceptionData.gatewayTransactionId = tx._id;
             }
 
-            // Create run if it doesn't exist to satisfy model requirement if needed, 
-            // but usually adjust is called with a runId from the UI.
-            if (exceptionData.runId) {
-                await Exception.create(exceptionData);
-            }
+            // Create the Exception record (runId is now optional in model)
+            await Exception.create(exceptionData);
         }
 
         // Update ReconciliationRun counts if runId is provided

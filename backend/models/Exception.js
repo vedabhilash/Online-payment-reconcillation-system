@@ -8,8 +8,7 @@ const exceptionSchema = new mongoose.Schema({
   },
   runId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ReconciliationRun',
-    required: true
+    ref: 'ReconciliationRun'
   },
   bankTransactionId: {
     type: mongoose.Schema.Types.ObjectId,
