@@ -264,6 +264,30 @@ router.post('/adjust', auth, async (req, res) => {
             { new: true }
         );
 
+        // If status is 'exception', also create a formal Exception record
+        if (status === 'exception') {
+            const exceptionData = {
+                userId: req.userId,
+                runId: runId, // Use provided runId
+                type: 'amount_mismatch', // default for manual adjustment
+                status: 'open',
+                notes: notes || 'Manually marked as exception'
+            };
+
+            // Assign transaction to the correct field based on its source
+            if (oldTx.source === 'bank_statement') { // Use oldTx to get source
+                exceptionData.bankTransactionId = tx._id;
+            } else {
+                exceptionData.gatewayTransactionId = tx._id;
+            }
+
+            // Create run if it doesn't exist to satisfy model requirement if needed, 
+            // but usually adjust is called with a runId from the UI.
+            if (exceptionData.runId) {
+                await Exception.create(exceptionData);
+            }
+        }
+
         // Update ReconciliationRun counts if runId is provided
         if (runId) {
             const update = { $inc: { unmatchedCount: -1 } };
