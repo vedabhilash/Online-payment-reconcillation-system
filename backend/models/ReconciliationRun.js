@@ -11,6 +11,8 @@ const reconciliationRunSchema = new mongoose.Schema({
     unmatchedCount: { type: Number, default: 0 },
     discrepancyCount: { type: Number, default: 0 },
     status: { type: String, default: 'running', enum: ['running', 'completed', 'failed'] },
+    batchAId: { type: mongoose.Schema.Types.ObjectId, ref: 'UploadBatch', default: null },
+    batchBId: { type: mongoose.Schema.Types.ObjectId, ref: 'UploadBatch', default: null },
     completedAt: { type: Date, default: null },
 }, { timestamps: true });
 

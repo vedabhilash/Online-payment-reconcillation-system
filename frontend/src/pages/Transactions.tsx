@@ -17,6 +17,10 @@ interface Transaction {
   amount: number; currency: string; transactionDate: string; status: string;
 }
 
+interface Run {
+  _id: string; sourceA: string; sourceB: string; createdAt: string;
+}
+
 const sourceLabels: Record<string, string> = {
   bank_statement: "Bank", invoice: "Invoice", payment_gateway: "Gateway", order: "Order",
 };
@@ -28,9 +32,11 @@ export default function Transactions() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [runs, setRuns] = useState<Run[]>([]);
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
+  const [runFilter, setRunFilter] = useState(searchParams.get("runId") || "all");
 
   const handleStatusChange = (val: string) => {
     setStatusFilter(val);
@@ -39,19 +45,36 @@ export default function Transactions() {
     setSearchParams(searchParams);
   };
 
+  const handleRunChange = (val: string) => {
+    setRunFilter(val);
+    if (val === "all") searchParams.delete("runId");
+    else searchParams.set("runId", val);
+    setSearchParams(searchParams);
+  };
+
   const batchId = searchParams.get("batchId");
 
   const fetchTransactions = () => {
     if (!user) return;
     const batchIdArr = batchId ? batchId.split(',') : undefined;
-    api.getTransactions({ source: sourceFilter, status: statusFilter, batchId: batchIdArr })
+    api.getTransactions({ 
+      source: sourceFilter, 
+      status: statusFilter, 
+      batchId: batchIdArr,
+      runId: runFilter === 'all' ? undefined : runFilter
+    })
       .then(setTransactions)
       .catch(() => { });
   };
 
   useEffect(() => {
+    if (!user) return;
+    api.getRuns().then(setRuns).catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
     fetchTransactions();
-  }, [user, sourceFilter, statusFilter, batchId]);
+  }, [user, sourceFilter, statusFilter, batchId, runFilter]);
 
   const handlePurge = async () => {
     if (!window.confirm("This will permanently delete ALL imported transactions and reconciliation history. Continue?")) return;
@@ -68,6 +91,7 @@ export default function Transactions() {
     setSearchParams({});
     setSourceFilter("all");
     setStatusFilter("all");
+    setRunFilter("all");
     setSearch("");
   };
 
@@ -113,6 +137,17 @@ export default function Transactions() {
                 <SelectItem value="invoice">Invoice</SelectItem>
                 <SelectItem value="payment_gateway">Payment Gateway</SelectItem>
                 <SelectItem value="order">Order</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={runFilter} onValueChange={handleRunChange}>
+              <SelectTrigger className="w-52"><SelectValue placeholder="Reconciliation Run" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Runs</SelectItem>
+                {runs.map((r) => (
+                  <SelectItem key={r._id} value={r._id}>
+                    {safeDate(r.createdAt)} ({r.sourceA.split('_')[0]} vs {r.sourceB.split('_')[0]})
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={handleStatusChange}>

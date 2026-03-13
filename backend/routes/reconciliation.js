@@ -56,6 +56,8 @@ router.post('/run', auth, async (req, res) => {
             dateTolerance,
             amountTolerance,
             totalCompared: txA.length + txB.length,
+            batchAId: lastBatchA ? lastBatchA._id : null,
+            batchBId: lastBatchB ? lastBatchB._id : null,
             status: 'running',
         });
 

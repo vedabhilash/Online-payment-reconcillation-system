@@ -84,12 +84,24 @@ function parsePDFText(text) {
 // GET /api/transactions
 router.get('/', auth, async (req, res) => {
     try {
-        const { source, status, batchId } = req.query;
+        const { source, status, batchId, runId } = req.query;
         const filter = { userId: req.userId };
         if (source && source !== 'all') filter.source = source;
         if (status && status !== 'all') filter.status = status;
         
-        if (batchId) {
+        // Handle runId: filter by the batches associated with this run
+        if (runId) {
+            const ReconciliationRun = require('../models/ReconciliationRun');
+            const run = await ReconciliationRun.findOne({ _id: runId, userId: req.userId });
+            if (run) {
+                const batchIds = [run.batchAId, run.batchBId].filter(Boolean);
+                if (batchIds.length) {
+                    filter.uploadBatchId = { $in: batchIds };
+                }
+            }
+        }
+        // Direct batchId filter (array or CSV string)
+        else if (batchId) {
             if (Array.isArray(batchId)) {
                 filter.uploadBatchId = { $in: batchId };
             } else if (batchId.includes(',')) {

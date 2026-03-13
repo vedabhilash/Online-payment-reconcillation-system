@@ -46,10 +46,11 @@ export const api = {
         return data;
     },
 
-    getTransactions: (params?: { source?: string; status?: string; batchId?: string | string[] }) => {
+    getTransactions: (params?: { source?: string; status?: string; batchId?: string | string[]; runId?: string }) => {
         const q = new URLSearchParams();
         if (params?.source) q.set('source', params.source);
         if (params?.status) q.set('status', params.status);
+        if (params?.runId) q.set('runId', params.runId);
         if (params?.batchId) {
             if (Array.isArray(params.batchId)) {
                 params.batchId.forEach(id => q.append('batchId', id));
