@@ -135,11 +135,11 @@ export function SidebarContent({ isMobile }: { isMobile?: boolean }) {
 
       {/* Column 2: Wide Navigation Bar */}
       <div className="flex-1 bg-[#f9fbfa] flex flex-col border-r border-slate-200">
-        <div className="px-6 py-8">
-           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">
+        <div className="px-6 py-5">
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">
              Organization
            </p>
-           <div className="flex items-center gap-2 mb-8">
+           <div className="flex items-center gap-2 mb-6">
              <div className="h-8 w-8 rounded bg-slate-200 flex items-center justify-center font-bold text-slate-600 text-xs shadow-inner">
                {user?.email?.[0].toUpperCase()}
              </div>
@@ -149,7 +149,7 @@ export function SidebarContent({ isMobile }: { isMobile?: boolean }) {
              </div>
            </div>
 
-           <h2 className="text-xl font-black text-[#001e2b] mb-6">
+           <h2 className="text-lg font-black text-[#001e2b] mb-2">
              {groups.find(g => g.id === activeGroup)?.label}
            </h2>
         </div>
