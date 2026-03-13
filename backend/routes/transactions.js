@@ -89,8 +89,15 @@ router.get('/', auth, async (req, res) => {
         if (source && source !== 'all') filter.source = source;
         if (status && status !== 'all') filter.status = status;
         
-        // Handle runId: filter by the batches associated with this run
-        if (runId) {
+        // Handle runId with matched/discrepancy status: Strictly show only what was matched in that specific run
+        if (runId && (status === 'matched' || status === 'discrepancy')) {
+            const Match = require('../models/Match');
+            const matches = await Match.find({ runId, userId: req.userId });
+            const matchedTxIds = matches.flatMap(m => [m.transactionAId, m.transactionBId]);
+            filter._id = { $in: matchedTxIds };
+        }
+        // Handle runId (general or unmatched): filter by the batches associated with this run
+        else if (runId) {
             const ReconciliationRun = require('../models/ReconciliationRun');
             const run = await ReconciliationRun.findOne({ _id: runId, userId: req.userId });
             if (run) {
