@@ -108,6 +108,19 @@ export const api = {
 
     bulkApprove: () => request('/matches/bulk-approve', { method: 'POST' }),
 
+    // Exceptions
+    getExceptions: (params?: { status?: string; type?: string }) => {
+        const q = new URLSearchParams();
+        if (params?.status) q.set('status', params.status);
+        if (params?.type) q.set('type', params.type);
+        return request(`/reconciliation/exceptions?${q}`);
+    },
+
+    getExceptionStats: () => request('/reconciliation/exceptions/stats'),
+
+    updateException: (id: string, payload: { status: string; notes?: string }) =>
+        request(`/reconciliation/exceptions/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+
     // Audit
     getAuditLogs: () => request('/audit'),
 

@@ -27,6 +27,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [runStats, setRunStats] = useState<RunStats>({ total: 0, matched: 0, unmatched: 0, discrepancy: 0, timingDifference: 0 });
   const [finStats, setFinStats] = useState<DashboardStats | null>(null);
+  const [excStats, setExcStats] = useState<any>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -39,6 +40,7 @@ export default function Dashboard() {
     })).catch(() => { });
 
     api.getAdminDashboardStats().then(setFinStats).catch(() => { });
+    api.getExceptionStats().then(setExcStats).catch(() => { });
   }, [user]);
 
   const pieData = [
@@ -64,9 +66,10 @@ export default function Dashboard() {
       </div>
 
       {/* Financial Health Section */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
         {[
           { label: "Total Revenue", value: `$${(finStats?.totalRevenue || 0).toFixed(2)}`, icon: DollarSign, color: "text-primary" },
+          { label: "Open Exceptions", value: excStats?.open || 0, icon: AlertTriangle, color: "text-destructive" },
           { label: "Paid Invoices", value: finStats?.paidInvoices || 0, icon: CheckCircle2, color: "text-success" },
           { label: "Pending Invoices", value: finStats?.unpaidInvoices || 0, icon: CopyMinus, color: "text-warning" },
           { label: "Total Invoices", value: finStats?.totalInvoices || 0, icon: FileText, color: "text-muted-foreground" },

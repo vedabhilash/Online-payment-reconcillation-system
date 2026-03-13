@@ -4,6 +4,7 @@ const Transaction = require('../models/Transaction');
 const ReconciliationRun = require('../models/ReconciliationRun');
 const Match = require('../models/Match');
 const Discrepancy = require('../models/Discrepancy');
+const Exception = require('../models/Exception');
 const AuditLog = require('../models/AuditLog');
 const UploadBatch = require('../models/UploadBatch');
 const { reconcileTransactions } = require('../services/reconciliationEngine');
@@ -85,35 +86,64 @@ router.post('/run', auth, async (req, res) => {
             if (m.type === 'timing_difference') timingDifferences.push(m);
         });
 
-        // Process discrepancies (amount mismatches)
+        // Create formal Exceptions for discrepancies
+        const exceptionsToSave = [];
         engineResult.discrepancies.forEach(d => {
-            discrepanciesToSave.push({
+            exceptionsToSave.push({
                 userId: req.userId,
                 runId: run._id,
-                transactionAId: d.bankTransaction._id,
-                transactionBId: d.gatewayTransaction._id,
+                bankTransactionId: d.bankTransaction._id,
+                gatewayTransactionId: d.gatewayTransaction._id,
                 type: 'amount_mismatch',
                 difference: d.discrepancy.difference,
-                status: 'unresolved'
+                status: 'open'
             });
         });
 
-        // Save matches to DB
+        // Also track unmatched (missing) transactions as exceptions
+        engineResult.unmatchedBank.forEach(tx => {
+            exceptionsToSave.push({
+                userId: req.userId,
+                runId: run._id,
+                bankTransactionId: tx._id,
+                type: 'missing_transaction',
+                status: 'open',
+                notes: 'Missing in Gateway'
+            });
+        });
+
+        engineResult.unmatchedGateway.forEach(tx => {
+            exceptionsToSave.push({
+                userId: req.userId,
+                runId: run._id,
+                gatewayTransactionId: tx._id,
+                type: 'missing_transaction',
+                status: 'open',
+                notes: 'Missing in Bank'
+            });
+        });
+
+        if (exceptionsToSave.length) {
+            await Exception.insertMany(exceptionsToSave);
+        }
+
+        // Save matches to DB and update transaction statuses
         if (matches.length) {
             await Match.insertMany(matches);
             const ids = matches.flatMap(m => [m.transactionAId, m.transactionBId]);
             await Transaction.updateMany({ _id: { $in: ids } }, { status: 'matched' });
         }
 
-        // Save discrepancies to DB
-        if (discrepanciesToSave.length) {
-            await Discrepancy.insertMany(discrepanciesToSave);
-            const ids = discrepanciesToSave.flatMap(d => [d.transactionAId, d.transactionBId]);
-            await Transaction.updateMany({ _id: { $in: ids } }, { status: 'discrepancy' });
+        // Mark transactions with exceptions
+        const excBankIds = exceptionsToSave.filter(e => e.bankTransactionId).map(e => e.bankTransactionId);
+        const excGateIds = exceptionsToSave.filter(e => e.gatewayTransactionId).map(e => e.gatewayTransactionId);
+        const allExcIds = [...new Set([...excBankIds, ...excGateIds])];
+        if (allExcIds.length) {
+            await Transaction.updateMany({ _id: { $in: allExcIds } }, { status: 'exception' });
         }
 
         const matchedCount = matches.length;
-        const discrepancyCount = discrepanciesToSave.length;
+        const discrepancyCount = exceptionsToSave.filter(e => e.type === 'amount_mismatch').length;
         const timingDiffCount = timingDifferences.length;
         const unmatchedCount = engineResult.unmatchedBank.length + engineResult.unmatchedGateway.length;
 
@@ -142,6 +172,75 @@ router.post('/run', auth, async (req, res) => {
             timingDifference: timingDiffCount,
             total: txA.length + txB.length,
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/reconciliation/exceptions - List exceptions
+router.get('/exceptions', auth, async (req, res) => {
+    try {
+        const { status, type } = req.query;
+        const query = { userId: req.userId };
+        if (status) query.status = status;
+        if (type) query.type = type;
+
+        const exceptions = await Exception.find(query)
+            .populate('bankTransactionId')
+            .populate('gatewayTransactionId')
+            .sort({ createdAt: -1 });
+        res.json(exceptions);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/reconciliation/exceptions/stats - Dashboard summary
+router.get('/exceptions/stats', auth, async (req, res) => {
+    try {
+        const stats = await Exception.aggregate([
+            { $match: { userId: new mongoose.Types.ObjectId(req.userId) } },
+            { $group: { _id: "$status", count: { $sum: 1 } } }
+        ]);
+
+        const formatted = {
+            open: 0,
+            investigating: 0,
+            resolved: 0,
+            ignored: 0
+        };
+
+        stats.forEach(s => {
+            formatted[s._id] = s.count;
+        });
+
+        res.json(formatted);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PUT /api/reconciliation/exceptions/:id - Update exception (investigate/resolve)
+router.put('/exceptions/:id', auth, async (req, res) => {
+    try {
+        const { status, notes } = req.body;
+        const exception = await Exception.findOneAndUpdate(
+            { _id: req.params.id, userId: req.userId },
+            { status, notes },
+            { new: true }
+        );
+
+        if (!exception) return res.status(404).json({ error: 'Exception not found' });
+
+        await AuditLog.create({
+            userId: req.userId,
+            action: 'update_exception',
+            entityType: 'exception',
+            entityId: exception._id,
+            details: { status, notes }
+        });
+
+        res.json(exception);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

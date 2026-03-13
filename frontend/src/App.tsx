@@ -13,6 +13,7 @@ import Reconcile from "@/pages/Reconcile";
 import Review from "@/pages/Review";
 import Reports from "@/pages/Reports";
 import SessionReport from "@/pages/SessionReport";
+import Exceptions from "@/pages/Exceptions";
 import Audit from "@/pages/Audit";
 import SettingsPage from "@/pages/SettingsPage";
 import Customers from "@/pages/Customers";
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/review" element={<Review />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/reports/:runId" element={<SessionReport />} />
+                <Route path="/exceptions" element={<Exceptions />} />
                 <Route path="/customers" element={<Customers />} />
                 <Route path="/invoices" element={<Invoices />} />
                 <Route path="/audit" element={<Audit />} />
