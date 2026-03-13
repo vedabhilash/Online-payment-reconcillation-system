@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Upload as UploadIcon, FileSpreadsheet, FileText, Check, ArrowRight, Loader2, Eye } from "lucide-react";
+import { Upload as UploadIcon, FileSpreadsheet, FileText, Check, ArrowRight, Loader2, Eye, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
@@ -147,13 +147,29 @@ export default function UploadPage() {
     }
   };
 
+  const handlePurge = async () => {
+    if (!window.confirm("This will permanently delete ALL imported transactions and reconciliation history. Continue?")) return;
+    try {
+      await api.purgeData();
+      toast({ title: "System reset", description: "All data has been cleared." });
+      reset();
+    } catch (err: unknown) {
+      toast({ title: "Clear failed", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
   const previewRows = fileType === "pdf" ? pdfRows : buildCsvTransactions();
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Upload Data</h1>
-        <p className="text-sm text-muted-foreground">Import CSV or PDF files for reconciliation</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Upload Data</h1>
+          <p className="text-sm text-muted-foreground">Import CSV or PDF files for reconciliation</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handlePurge} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+          <Trash2 className="mr-2 h-4 w-4" /> Clear All Data
+        </Button>
       </div>
 
       {/* ── Step 1: File Select ── */}

@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { safeDate } from "@/lib/utils";
-import { Search } from "lucide-react";
+import { Search, Trash2, RotateCcw } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 interface Transaction {
   _id: string; source: string; referenceId: string | null; description: string | null;
@@ -37,12 +39,27 @@ export default function Transactions() {
     setSearchParams(searchParams);
   };
 
-  useEffect(() => {
+  const fetchTransactions = () => {
     if (!user) return;
     api.getTransactions({ source: sourceFilter, status: statusFilter })
       .then(setTransactions)
       .catch(() => { });
+  };
+
+  useEffect(() => {
+    fetchTransactions();
   }, [user, sourceFilter, statusFilter]);
+
+  const handlePurge = async () => {
+    if (!window.confirm("This will permanently delete ALL imported transactions and reconciliation history. Continue?")) return;
+    try {
+      await api.purgeData();
+      fetchTransactions();
+      toast({ title: "System reset", description: "All data has been cleared." });
+    } catch (err: unknown) {
+      toast({ title: "Clear failed", description: (err as Error).message, variant: "destructive" });
+    }
+  };
 
   const filtered = transactions.filter(
     (t) =>
@@ -54,9 +71,14 @@ export default function Transactions() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Transactions</h1>
-        <p className="text-sm text-muted-foreground">View and filter all imported transactions</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Transactions</h1>
+          <p className="text-sm text-muted-foreground">View and filter all imported transactions</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handlePurge} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+          <Trash2 className="mr-2 h-4 w-4" /> Reset All Data
+        </Button>
       </div>
 
       <Card>
