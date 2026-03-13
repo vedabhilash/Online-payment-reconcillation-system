@@ -25,7 +25,7 @@ export default function Reports() {
 
   useEffect(() => {
     if (!user) return;
-    api.getRuns().then(setRuns).catch(() => { });
+    api.getReconciliationRuns().then(setRuns).catch(() => { });
   }, [user]);
 
   const chartData = (runs || []).slice(0, 10).reverse().map((r) => ({

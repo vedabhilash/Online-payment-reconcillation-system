@@ -77,7 +77,7 @@ export const api = {
     purgeData: () => request('/transactions/purge', { method: 'DELETE' }),
 
     // Reconciliation
-    getRuns: () => request('/reconciliation/runs'),
+    getReconciliationRuns: () => request('/reconciliation/runs'),
 
     runReconciliation: (payload: {
         sourceA: string;
