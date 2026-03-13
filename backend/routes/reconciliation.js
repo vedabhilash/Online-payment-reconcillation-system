@@ -78,7 +78,7 @@ router.post('/run', auth, async (req, res) => {
                 transactionAId: m.bankTransaction._id,
                 transactionBId: m.gatewayTransaction._id,
                 confidence: 100,
-                matchType: m.type === 'reference' ? 'reference' : 'auto',
+                matchType: m.type,
                 status: 'pending'
             };
             matches.push(matchData);

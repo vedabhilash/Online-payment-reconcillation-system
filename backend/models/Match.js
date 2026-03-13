@@ -5,7 +5,7 @@ const matchSchema = new mongoose.Schema({
     runId: { type: mongoose.Schema.Types.ObjectId, ref: 'ReconciliationRun', required: true },
     transactionAId: { type: mongoose.Schema.Types.ObjectId, ref: 'Transaction', required: true },
     transactionBId: { type: mongoose.Schema.Types.ObjectId, ref: 'Transaction', required: true },
-    matchType: { type: String, default: 'auto', enum: ['auto', 'manual'] },
+    matchType: { type: String, default: 'auto', enum: ['auto', 'manual', 'reference', 'timing_difference'] },
     confidence: { type: Number, default: null },
     status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected'] },
     notes: { type: String, default: null },
