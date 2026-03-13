@@ -40,14 +40,16 @@ router.post('/create-checkout-session', auth, async (req, res) => {
 
         // Add tax if needed as a separate line item or use Stripe tax
 
-        const base_url = process.env.FRONTEND_URL || 'http://localhost:8080';
+        // Use the origin of the request (e.g. https://your-app.vercel.app) if available, 
+        // fallback to FRONTEND_URL environment variable.
+        const base_url = req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:8080';
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items,
             mode: 'payment',
-            success_url: `${base_url}/${req.userRole === 'CUSTOMER' ? 'customer/invoices' : 'invoices'}?payment=success&invoiceId=${invoiceId}&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${base_url}/${req.userRole === 'CUSTOMER' ? 'customer/invoices' : 'invoices'}?payment=cancelled`,
+            success_url: `${base_url.replace(/\/$/, '')}/${req.userRole === 'CUSTOMER' ? 'customer/invoices' : 'invoices'}?payment=success&invoiceId=${invoiceId}&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${base_url.replace(/\/$/, '')}/${req.userRole === 'CUSTOMER' ? 'customer/invoices' : 'invoices'}?payment=cancelled`,
             client_reference_id: invoice._id.toString(),
             customer_email: invoice.customerId?.email,
             metadata: {
