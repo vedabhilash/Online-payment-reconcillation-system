@@ -66,6 +66,8 @@ export const api = {
         columnMapping: object;
     }) => request('/transactions/upload', { method: 'POST', body: JSON.stringify(payload) }),
 
+    purgeData: () => request('/transactions/purge', { method: 'DELETE' }),
+
     // Reconciliation
     getRuns: () => request('/reconciliation/runs'),
 

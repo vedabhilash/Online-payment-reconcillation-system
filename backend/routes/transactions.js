@@ -177,4 +177,28 @@ router.post('/upload', auth, async (req, res) => {
     }
 });
 
+// DELETE /api/transactions/purge - Clear all transactions and reconciliation history for a fresh start
+router.delete('/purge', auth, async (req, res) => {
+    try {
+        const userId = req.userId;
+        
+        // Delete related data in order
+        await Promise.all([
+            Transaction.deleteMany({ userId }),
+            require('../models/Match').deleteMany({ userId }),
+            require('../models/ReconciliationRun').deleteMany({ userId }),
+            require('../models/UploadBatch').deleteMany({ userId }),
+            AuditLog.create({
+                userId,
+                action: 'purge_all',
+                details: { timestamp: new Date() }
+            })
+        ]);
+
+        res.json({ message: 'All transactions and reconciliation history cleared successfully.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

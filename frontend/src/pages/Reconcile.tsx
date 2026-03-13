@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { GitCompareArrows, CheckCircle2, XCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { GitCompareArrows, CheckCircle2, XCircle, AlertTriangle, Loader2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type Source = "bank_statement" | "invoice" | "payment_gateway" | "order";
@@ -46,6 +46,17 @@ export default function Reconcile() {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
     } finally {
       setIsRunning(false);
+    }
+  };
+
+  const handlePurge = async () => {
+    if (!window.confirm("This will permanently delete ALL imported transactions, matches, and reconciliation history. Continue?")) return;
+    try {
+      await api.purgeData();
+      setResult(null);
+      toast({ title: "System reset", description: "All data has been cleared." });
+    } catch (err: unknown) {
+      toast({ title: "Clear failed", description: (err as Error).message, variant: "destructive" });
     }
   };
 
@@ -91,6 +102,11 @@ export default function Reconcile() {
           <Button onClick={runReconciliation} disabled={isRunning} className="w-full">
             {isRunning ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Running…</> : <><GitCompareArrows className="mr-2 h-4 w-4" /> Run Reconciliation</>}
           </Button>
+          <div className="pt-2 border-t mt-4">
+            <Button variant="ghost" size="sm" onClick={handlePurge} className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+              <Trash2 className="mr-2 h-3.5 w-3.5" /> Clear All Previous Data
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
