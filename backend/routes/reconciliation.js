@@ -257,10 +257,20 @@ router.put('/exceptions/:id', auth, async (req, res) => {
 // POST /api/reconciliation/adjust (Manual Investigation & Actions)
 router.post('/adjust', auth, async (req, res) => {
     try {
-        const { transactionId, status, category, notes, runId } = req.body;
+        const { transactionId, status, category, notes } = req.body;
+        let { runId } = req.body;
 
         const oldTx = await Transaction.findOne({ _id: transactionId, userId: req.userId });
         if (!oldTx) return res.status(404).json({ error: 'Transaction not found' });
+
+        // If runId is missing from frontend, derive the most recent related run to update dashboard stats
+        if (!runId && oldTx.uploadBatchId) {
+            const run = await ReconciliationRun.findOne({
+                userId: req.userId,
+                $or: [{ batchAId: oldTx.uploadBatchId }, { batchBId: oldTx.uploadBatchId }]
+            }).sort({ createdAt: -1 });
+            if (run) runId = run._id;
+        }
 
         const tx = await Transaction.findOneAndUpdate(
             { _id: transactionId, userId: req.userId },
@@ -276,7 +286,7 @@ router.post('/adjust', auth, async (req, res) => {
         if (status === 'exception') {
             const exceptionData = {
                 userId: req.userId,
-                runId: runId, // Use provided runId
+                runId: runId, // Use provided/derived runId
                 type: 'amount_mismatch', // default for manual adjustment
                 status: 'open',
                 notes: notes || 'Manually marked as exception'
@@ -293,12 +303,15 @@ router.post('/adjust', auth, async (req, res) => {
             await Exception.create(exceptionData);
         }
 
-        // Update ReconciliationRun counts if runId is provided
+        // Update ReconciliationRun counts if runId is present
         if (runId) {
             const update = { $inc: { unmatchedCount: -1 } };
             if (status === 'timing_difference') update.$inc.timingDifferenceCount = 1;
             else if (status === 'adjusted') update.$inc.adjustedCount = 1;
-            else if (status === 'exception') update.$inc.exceptionCount = 1;
+            else if (status === 'exception') {
+                update.$inc.exceptionCount = 1;
+                update.$inc.discrepancyCount = 1; // Reflects as yellow discrepancy in dashboard
+            }
             else if (status === 'matched') update.$inc.matchedCount = 1; // if manually matched
 
             await ReconciliationRun.findByIdAndUpdate(runId, update);
@@ -321,7 +334,8 @@ router.post('/adjust', auth, async (req, res) => {
 // POST /api/reconciliation/manual-match
 router.post('/manual-match', auth, async (req, res) => {
     try {
-        const { transactionAId, transactionBId, runId } = req.body;
+        const { transactionAId, transactionBId } = req.body;
+        let { runId } = req.body;
 
         const [txA, txB] = await Promise.all([
             Transaction.findOne({ _id: transactionAId, userId: req.userId }),
@@ -329,6 +343,16 @@ router.post('/manual-match', auth, async (req, res) => {
         ]);
 
         if (!txA || !txB) return res.status(404).json({ error: 'One or both transactions not found' });
+
+        // If runId is missing from frontend, derive the most recent related run to update dashboard stats 
+        if (!runId && (txA.uploadBatchId || txB.uploadBatchId)) {
+             const batchIds = [txA.uploadBatchId, txB.uploadBatchId].filter(Boolean);
+             const run = await ReconciliationRun.findOne({
+                 userId: req.userId,
+                 $or: [{ batchAId: { $in: batchIds } }, { batchBId: { $in: batchIds } }]
+             }).sort({ createdAt: -1 });
+             if (run) runId = run._id;
+        }
 
         const match = await Match.create({
             userId: req.userId,
