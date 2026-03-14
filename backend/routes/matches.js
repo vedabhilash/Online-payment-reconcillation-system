@@ -63,12 +63,6 @@ router.patch('/:id', auth, async (req, res) => {
                 { _id: { $in: [match.transactionAId, match.transactionBId] } },
                 { status: 'unmatched' }
             );
-            
-            // Update ReconciliationRun counts
-            const ReconciliationRun = require('../models/ReconciliationRun');
-            await ReconciliationRun.findByIdAndUpdate(match.runId, {
-                $inc: { matchedCount: -1, unmatchedCount: 2 }
-            });
         }
 
         await AuditLog.create({

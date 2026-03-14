@@ -179,8 +179,6 @@ router.post('/run', auth, async (req, res) => {
             discrepancy: discrepancyCount,
             timingDifference: timingDiffCount,
             total: txA.length + txB.length,
-            batchAId: lastBatchA ? lastBatchA._id : null,
-            batchBId: lastBatchB ? lastBatchB._id : null,
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
