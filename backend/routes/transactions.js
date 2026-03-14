@@ -222,6 +222,7 @@ router.delete('/purge', auth, async (req, res) => {
             AuditLog.create({
                 userId,
                 action: 'purge_all',
+                entityType: 'system',
                 details: { timestamp: new Date() }
             })
         ]);
