@@ -133,12 +133,21 @@ router.post('/run', auth, async (req, res) => {
             await Transaction.updateMany({ _id: { $in: ids } }, { status: 'matched' });
         }
 
-        // Mark transactions with exceptions
-        const excBankIds = exceptionsToSave.filter(e => e.bankTransactionId).map(e => e.bankTransactionId);
-        const excGateIds = exceptionsToSave.filter(e => e.gatewayTransactionId).map(e => e.gatewayTransactionId);
-        const allExcIds = [...new Set([...excBankIds, ...excGateIds])];
-        if (allExcIds.length) {
-            await Transaction.updateMany({ _id: { $in: allExcIds } }, { status: 'exception' });
+        // Mark transactions with discrepancies
+        const discBankIds = exceptionsToSave.filter(e => e.type === 'amount_mismatch' && e.bankTransactionId).map(e => e.bankTransactionId);
+        const discGateIds = exceptionsToSave.filter(e => e.type === 'amount_mismatch' && e.gatewayTransactionId).map(e => e.gatewayTransactionId);
+        const allDiscIds = [...new Set([...discBankIds, ...discGateIds])];
+        if (allDiscIds.length) {
+            await Transaction.updateMany({ _id: { $in: allDiscIds } }, { status: 'discrepancy' });
+        }
+        
+        // Mark missing transactions as exception
+        const missingBankIds = exceptionsToSave.filter(e => e.type === 'missing_transaction' && e.bankTransactionId).map(e => e.bankTransactionId);
+        const missingGateIds = exceptionsToSave.filter(e => e.type === 'missing_transaction' && e.gatewayTransactionId).map(e => e.gatewayTransactionId);
+        const allMissingIds = [...new Set([...missingBankIds, ...missingGateIds])];
+        if (allMissingIds.length) {
+            // Actually, keep them as 'unmatched' so they appear in the Transactions view under Unmatched
+            await Transaction.updateMany({ _id: { $in: allMissingIds } }, { status: 'unmatched' });
         }
 
         const matchedCount = matches.length;
