@@ -21,6 +21,8 @@ interface RunResult {
   matched: number; 
   unmatched: number; 
   discrepancy: number; 
+  timingDifference: number;
+  adjusted: number;
   total: number; 
 }
 
@@ -50,6 +52,8 @@ export default function Reconcile() {
           matched: last.matchedCount,
           unmatched: last.unmatchedCount,
           discrepancy: last.discrepancyCount,
+          timingDifference: last.timingDifferenceCount || 0,
+          adjusted: last.adjustedCount || 0,
           total: last.totalCompared,
           batchAId: last.batchAId,
           batchBId: last.batchBId
@@ -64,7 +68,17 @@ export default function Reconcile() {
     setResult(null);
     try {
       const res = await api.runReconciliation({ sourceA, sourceB, dateTolerance, amountTolerance });
-      setResult(res as RunResult);
+      setResult({
+        runId: res.runId,
+        matched: res.matched,
+        unmatched: res.unmatched,
+        discrepancy: res.discrepancy,
+        timingDifference: res.timingDifference || 0,
+        adjusted: 0,
+        total: res.total,
+        batchAId: res.batchAId,
+        batchBId: res.batchBId
+      });
       toast({ title: "Reconciliation complete", description: `${res.matched} matches found.` });
     } catch (err: unknown) {
       toast({ title: "Error", description: (err as Error).message, variant: "destructive" });
@@ -149,21 +163,31 @@ export default function Reconcile() {
         <Card>
           <CardHeader><CardTitle className="text-base">Results</CardTitle></CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="flex flex-col items-center rounded-lg bg-success/10 p-4">
-                <CheckCircle2 className="mb-2 h-6 w-6 text-success" />
-                <span className="font-display text-2xl font-bold">{result.matched}</span>
-                <span className="text-xs text-muted-foreground">Matched</span>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="flex flex-col items-center rounded-lg bg-success/10 p-3">
+                <CheckCircle2 className="mb-1 h-5 w-5 text-success" />
+                <span className="font-display text-xl font-bold">{(result as any).matched || 0}</span>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold">Matched</span>
               </div>
-              <div className="flex flex-col items-center rounded-lg bg-muted p-4">
-                <XCircle className="mb-2 h-6 w-6 text-muted-foreground" />
-                <span className="font-display text-2xl font-bold">{result.unmatched}</span>
-                <span className="text-xs text-muted-foreground">Unmatched</span>
+              <div className="flex flex-col items-center rounded-lg bg-muted p-3">
+                <XCircle className="mb-1 h-5 w-5 text-muted-foreground" />
+                <span className="font-display text-xl font-bold">{result.unmatched}</span>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold">Unmatched</span>
               </div>
-              <div className="flex flex-col items-center rounded-lg bg-warning/10 p-4">
-                <AlertTriangle className="mb-2 h-6 w-6 text-warning" />
-                <span className="font-display text-2xl font-bold">{result.discrepancy}</span>
-                <span className="text-xs text-muted-foreground">Discrepancies</span>
+              <div className="flex flex-col items-center rounded-lg bg-warning/10 p-3">
+                <AlertTriangle className="mb-1 h-5 w-5 text-warning" />
+                <span className="font-display text-xl font-bold">{result.discrepancy}</span>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold">Discrepancy</span>
+              </div>
+              <div className="flex flex-col items-center rounded-lg bg-primary/10 p-3">
+                <Clock className="mb-1 h-5 w-5 text-primary" />
+                <span className="font-display text-xl font-bold">{(result as any).timingDifference || 0}</span>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold">Timing Diff</span>
+              </div>
+              <div className="flex flex-col items-center rounded-lg bg-purple-500/10 p-3">
+                <BadgeCent className="mb-1 h-5 w-5 text-purple-500" />
+                <span className="font-display text-xl font-bold">{(result as any).adjusted || 0}</span>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold">Adjusted</span>
               </div>
             </div>
 
