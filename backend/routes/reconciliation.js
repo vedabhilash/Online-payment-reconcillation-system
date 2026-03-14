@@ -49,9 +49,7 @@ router.post('/run', auth, async (req, res) => {
             Transaction.find(queryB),
         ]);
 
-        if (!txA.length || !txB.length) {
-            return res.status(400).json({ error: 'Need unmatched transactions in both sources' });
-        }
+
 
         const run = await ReconciliationRun.create({
             userId: req.userId,
