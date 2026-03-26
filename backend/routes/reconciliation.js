@@ -305,16 +305,32 @@ router.post('/adjust', auth, async (req, res) => {
 
         // Update ReconciliationRun counts if runId is present
         if (runId) {
-            const update = { $inc: { unmatchedCount: -1 } };
-            if (status === 'timing_difference') update.$inc.timingDifferenceCount = 1;
-            else if (status === 'adjusted') update.$inc.adjustedCount = 1;
-            else if (status === 'exception') {
-                update.$inc.exceptionCount = 1;
-                update.$inc.discrepancyCount = 1; // Reflects as yellow discrepancy in dashboard
-            }
-            else if (status === 'matched') update.$inc.matchedCount = 1; // if manually matched
+            const update = { $inc: {} };
+            let shouldUpdate = false;
 
-            await ReconciliationRun.findByIdAndUpdate(runId, update);
+            // Only decrement from the pool it was originally in
+            if (oldTx.status === 'unmatched') {
+                update.$inc.unmatchedCount = -1;
+                shouldUpdate = true;
+            } else if (oldTx.status === 'discrepancy') {
+                update.$inc.discrepancyCount = -1;
+                shouldUpdate = true;
+            }
+
+            if (shouldUpdate) {
+                if (status === 'timing_difference') update.$inc.timingDifferenceCount = 1;
+                else if (status === 'adjusted') update.$inc.adjustedCount = 1;
+                else if (status === 'exception') {
+                    update.$inc.exceptionCount = 1;
+                    update.$inc.discrepancyCount = (update.$inc.discrepancyCount || 0) + 1;
+                }
+                else if (status === 'matched') update.$inc.matchedCount = 1;
+
+                // Cleanup empty $inc if no increments were added (unlikely but safe)
+                if (Object.keys(update.$inc).length > 0) {
+                    await ReconciliationRun.findByIdAndUpdate(runId, update);
+                }
+            }
         }
 
         await AuditLog.create({
@@ -367,9 +383,18 @@ router.post('/manual-match', auth, async (req, res) => {
         await Transaction.updateMany({ _id: { $in: [transactionAId, transactionBId] } }, { status: 'matched' });
 
         if (runId) {
-            await ReconciliationRun.findByIdAndUpdate(runId, {
-                $inc: { matchedCount: 1, unmatchedCount: -2 }
+            const update = { $inc: { matchedCount: 1 } };
+            
+            // Correctly decrement based on previous statuses
+            [txA, txB].forEach(tx => {
+                if (tx.status === 'unmatched') {
+                    update.$inc.unmatchedCount = (update.$inc.unmatchedCount || 0) - 1;
+                } else if (tx.status === 'discrepancy') {
+                    update.$inc.discrepancyCount = (update.$inc.discrepancyCount || 0) - 1;
+                }
             });
+
+            await ReconciliationRun.findByIdAndUpdate(runId, update);
         }
 
         res.json(match);
@@ -382,13 +407,26 @@ router.post('/manual-match', auth, async (req, res) => {
 router.get('/report/:runId', auth, async (req, res) => {
     try {
         const { runId } = req.params;
-        const [run, matches, discrepancies] = await Promise.all([
+        const [run, matches, exceptions] = await Promise.all([
             ReconciliationRun.findOne({ _id: runId, userId: req.userId }),
             Match.find({ runId, userId: req.userId }).populate('transactionAId').populate('transactionBId'),
-            Discrepancy.find({ runId, userId: req.userId }).populate('transactionAId').populate('transactionBId')
+            Exception.find({ runId, userId: req.userId, type: 'amount_mismatch' })
+                .populate('bankTransactionId')
+                .populate('gatewayTransactionId')
         ]);
 
         if (!run) return res.status(404).json({ error: 'Run not found' });
+
+        // Map exceptions to the format expected by the frontend (transactionAId/transactionBId)
+        const discrepancies = exceptions.map(e => ({
+            _id: e._id,
+            transactionAId: e.bankTransactionId,
+            transactionBId: e.gatewayTransactionId,
+            difference: e.difference,
+            type: e.type,
+            status: e.status,
+            notes: e.notes
+        }));
 
         // Get unmatched transactions related to this run's batches
         const unmatched = await Transaction.find({

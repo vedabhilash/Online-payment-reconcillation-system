@@ -80,26 +80,9 @@ export default function SessionReport() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {/* Perfect Matches */}
-              {matches.map((m: any) => (
-                <TableRow key={m._id}>
-                  <TableCell>
-                    <p className="text-sm font-bold">{m.transactionAId?.description || "Bank Entry"}</p>
-                    <p className="text-[10px] text-muted-foreground">{safeDate(m.transactionAId?.transactionDate)} • {m.transactionAId?.referenceId || "-"}</p>
-                  </TableCell>
-                  <TableCell>
-                    <p className="text-sm font-bold">{m.transactionBId?.description || "Gateway Entry"}</p>
-                    <p className="text-[10px] text-muted-foreground">{safeDate(m.transactionBId?.transactionDate)} • {m.transactionBId?.referenceId || "-"}</p>
-                  </TableCell>
-                  <TableCell className="text-sm font-mono">${m.transactionAId?.amount.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm font-mono text-muted-foreground">$0.00</TableCell>
-                  <TableCell><Badge variant="default" className="bg-success/20 text-success border-0"><CheckCircle2 className="h-3 w-3 mr-1" /> Matched</Badge></TableCell>
-                </TableRow>
-              ))}
-
-              {/* Discrepancies */}
+              {/* Discrepancies first (priority) */}
               {discrepancies.map((d: any) => (
-                <TableRow key={d._id} className="bg-warning/5">
+                <TableRow key={d._id} className="bg-warning/5 border-l-4 border-l-warning">
                   <TableCell>
                     <p className="text-sm font-bold">{d.transactionAId?.description || "Bank Entry"}</p>
                     <p className="text-[10px] text-muted-foreground">{safeDate(d.transactionAId?.transactionDate)}</p>
@@ -111,14 +94,14 @@ export default function SessionReport() {
                   <TableCell className="text-sm font-mono truncate max-w-[120px]">
                     ${d.transactionAId?.amount.toFixed(2)} vs ${d.transactionBId?.amount.toFixed(2)}
                   </TableCell>
-                  <TableCell className="text-sm font-mono text-warning">-${d.difference.toFixed(2)}</TableCell>
-                  <TableCell><Badge variant="outline" className="text-warning border-warning/50"><AlertCircle className="h-3 w-3 mr-1" /> Mismatch</Badge></TableCell>
+                  <TableCell className="text-sm font-mono text-warning">-${Math.abs(d.difference).toFixed(2)}</TableCell>
+                  <TableCell><Badge variant="outline" className="bg-warning/10 text-warning border-warning/50 font-bold uppercase text-[10px]"><AlertCircle className="h-3 w-3 mr-1" /> Mismatch</Badge></TableCell>
                 </TableRow>
               ))}
 
-              {/* Unmatched */}
+              {/* Unmatched next */}
               {unmatched.map((u: any) => (
-                <TableRow key={u._id} className="opacity-60">
+                <TableRow key={u._id} className="opacity-70 bg-muted/5 border-l-4 border-l-muted">
                   <TableCell>
                     {u.source === run.sourceA ? (
                       <div>
@@ -137,7 +120,24 @@ export default function SessionReport() {
                   </TableCell>
                   <TableCell className="text-sm font-mono">${u.amount.toFixed(2)}</TableCell>
                   <TableCell className="text-sm font-mono">—</TableCell>
-                  <TableCell><Badge variant="secondary"><HelpCircle className="h-3 w-3 mr-1" /> Missing</Badge></TableCell>
+                  <TableCell><Badge variant="secondary" className="bg-muted text-muted-foreground uppercase text-[10px] font-bold"><HelpCircle className="h-3 w-3 mr-1" /> Missing</Badge></TableCell>
+                </TableRow>
+              ))}
+
+              {/* Perfect Matches at the bottom */}
+              {matches.map((m: any) => (
+                <TableRow key={m._id} className="opacity-80">
+                  <TableCell>
+                    <p className="text-sm font-bold">{m.transactionAId?.description || "Bank Entry"}</p>
+                    <p className="text-[10px] text-muted-foreground">{safeDate(m.transactionAId?.transactionDate)} • {m.transactionAId?.referenceId || "-"}</p>
+                  </TableCell>
+                  <TableCell>
+                    <p className="text-sm font-bold">{m.transactionBId?.description || "Gateway Entry"}</p>
+                    <p className="text-[10px] text-muted-foreground">{safeDate(m.transactionBId?.transactionDate)} • {m.transactionBId?.referenceId || "-"}</p>
+                  </TableCell>
+                  <TableCell className="text-sm font-mono">${m.transactionAId?.amount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm font-mono text-muted-foreground">$0.00</TableCell>
+                  <TableCell><Badge variant="default" className="bg-success/20 text-success border-0 font-bold uppercase text-[10px]"><CheckCircle2 className="h-3 w-3 mr-1" /> Matched</Badge></TableCell>
                 </TableRow>
               ))}
             </TableBody>
